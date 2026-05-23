@@ -136,30 +136,36 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .dia-tab.on{background:var(--card);color:var(--dia);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 
 /* selector de días (historial) */
-.day-selector{display:flex;gap:6px;overflow-x:auto;padding:2px 0 14px;-webkit-overflow-scrolling:touch;}
+.day-selector{display:flex;gap:6px;padding:2px 0 14px;}
 .day-selector::-webkit-scrollbar{display:none;}
-.day-chip{flex-shrink:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;padding:7px 13px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);text-align:center;line-height:1.3;}
+.day-chip{flex:1;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;padding:7px 4px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);text-align:center;line-height:1.3;}
 .day-chip.on{background:var(--dia);color:#fff;border-color:var(--dia);}
-.day-chip .dc-wd{font-size:10px;text-transform:uppercase;letter-spacing:.8px;display:block;}
+.day-chip .dc-wd{font-size:10px;text-transform:uppercase;letter-spacing:.5px;display:block;}
 .day-chip .dc-d{font-size:15px;font-weight:600;}
 
 /* campos de día */
 .dia-field{margin-bottom:16px;}
-.dia-field label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;}
+.dia-field label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dia);margin-bottom:8px;background:var(--dia-soft);padding:8px 12px;border-radius:10px;font-weight:600;}
 .dia-field textarea,.dia-field input{width:100%;border:none;border-bottom:1.5px solid var(--line-soft);background:transparent;font-size:16px;line-height:1.5;color:var(--ink);outline:none;padding:4px 0 8px;resize:none;transition:border-color .2s;}
 .dia-field textarea:focus,.dia-field input:focus{border-color:var(--dia);}
 .dia-field textarea::placeholder,.dia-field input::placeholder{color:var(--ink-soft);}
 
 /* aspect blocks */
 .aspect-block{margin-bottom:20px;}
-.aspect-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.aspect-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 12px;border-radius:10px;}
+.aspect-header.asp-pro{background:rgba(74,144,217,.12);}
+.aspect-header.asp-per{background:rgba(232,134,74,.12);}
+.aspect-header.asp-soc{background:rgba(123,196,123,.12);}
 .aspect-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .aspect-dot.pro{background:#4a90d9;}
 .aspect-dot.per{background:#e8864a;}
 .aspect-dot.soc{background:#7bc47b;}
-.aspect-title{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+.aspect-title{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
+.asp-pro .aspect-title{color:#4a90d9;}
+.asp-per .aspect-title{color:#e8864a;}
+.asp-soc .aspect-title{color:#7bc47b;}
 .aspect-tasks{}
-.aspect-task-item{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line-soft);}
+.aspect-task-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line-soft);background:var(--dia-soft);border-radius:10px;margin-bottom:6px;}
 .aspect-task-item:last-child{border-bottom:none;}
 .at-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .at-check.done-c{background:var(--dia);border-color:var(--dia);}
@@ -167,9 +173,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .at-check.done-c svg{opacity:1;}
 .at-text{flex:1;font-size:16px;transition:color .2s;}
 .at-text.done-t{color:var(--ink-soft);text-decoration:line-through;}
-.at-del{color:var(--ink-soft);opacity:.3;font-size:16px;padding:2px 4px;}
-.add-at{display:flex;align-items:center;gap:11px;padding:9px 0;}
-.add-at-plus{width:22px;height:22px;color:var(--ink-soft);font-size:20px;display:flex;align-items:center;justify-content:center;}
+.at-del{color:var(--ink-soft);opacity:.4;font-size:16px;padding:4px 6px;}
+.add-at{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1.5px solid var(--line-soft);border-radius:10px;background:var(--card);}
+.add-at-plus{width:22px;height:22px;color:var(--dia);font-size:20px;display:flex;align-items:center;justify-content:center;}
 .add-at input{flex:1;border:none;background:transparent;font-size:15px;outline:none;color:var(--ink);}
 .add-at input::placeholder{color:var(--ink-soft);}
 
@@ -287,9 +293,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 <div id="app" style="display:none">
 
   <!-- barra superior con usuario -->
-  <div style="display:flex;justify-content:flex-end;align-items:center;padding:6px 18px 0;gap:8px;">
-    <span id="userEmail" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;color:var(--ink-soft);letter-spacing:.3px;"></span>
-    <button id="logoutBtn" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;color:var(--ink-soft);padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);">Salir</button>
+  <div style="display:flex;justify-content:flex-end;align-items:center;padding:10px 18px 0;gap:10px;">
+    <span id="userEmail" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;color:var(--ink-soft);letter-spacing:.3px;"></span>
+    <button id="logoutBtn" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;color:var(--ink-soft);padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);">Salir</button>
   </div>
   <section class="screen active" id="s-pomodoro">
     <div class="head"><h1>Pomodoro</h1><div class="date"><span class="dot"></span><span id="pomo-status">Listo</span></div></div>
@@ -397,17 +403,17 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <!-- tareas por aspecto -->
       <div class="card" id="aspectCard">
         <div class="aspect-block" id="asp-pro">
-          <div class="aspect-header"><div class="aspect-dot pro"></div><div class="aspect-title">Profesional</div></div>
+          <div class="aspect-header asp-pro"><div class="aspect-dot pro"></div><div class="aspect-title">Profesional</div></div>
           <div class="aspect-tasks" id="at-pro"></div>
           <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="pro"></div>
         </div>
         <div class="aspect-block" id="asp-per" style="margin-top:6px;">
-          <div class="aspect-header"><div class="aspect-dot per"></div><div class="aspect-title">Personal</div></div>
+          <div class="aspect-header asp-per"><div class="aspect-dot per"></div><div class="aspect-title">Personal</div></div>
           <div class="aspect-tasks" id="at-per"></div>
           <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="per"></div>
         </div>
         <div class="aspect-block" id="asp-soc" style="margin-top:6px;margin-bottom:0;">
-          <div class="aspect-header"><div class="aspect-dot soc"></div><div class="aspect-title">Social</div></div>
+          <div class="aspect-header asp-soc"><div class="aspect-dot soc"></div><div class="aspect-title">Social</div></div>
           <div class="aspect-tasks" id="at-soc"></div>
           <div class="add-at" style="margin-bottom:0"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="soc"></div>
         </div>
