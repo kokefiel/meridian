@@ -146,28 +146,28 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 /* campos de día */
 .dia-field{margin-bottom:16px;}
 .dia-field label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dia);margin-bottom:8px;background:var(--dia-soft);padding:8px 12px;border-radius:10px;font-weight:600;}
-.dia-field textarea,.dia-field input{width:100%;border:none;border-bottom:1.5px solid var(--line-soft);background:transparent;font-size:16px;line-height:1.5;color:var(--ink);outline:none;padding:4px 0 8px;resize:none;transition:border-color .2s;}
+.dia-field textarea,.dia-field input{width:100%;border:1.5px solid var(--line-soft);background:var(--card);font-size:16px;line-height:1.5;color:var(--ink);outline:none;padding:10px 12px;resize:none;transition:border-color .2s;border-radius:10px;}
 .dia-field textarea:focus,.dia-field input:focus{border-color:var(--dia);}
 .dia-field textarea::placeholder,.dia-field input::placeholder{color:var(--ink-soft);}
 
 /* aspect blocks */
 .aspect-block{margin-bottom:20px;}
 .aspect-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 12px;border-radius:10px;}
-.aspect-header.asp-pro{background:rgba(74,144,217,.12);}
-.aspect-header.asp-per{background:rgba(232,134,74,.12);}
-.aspect-header.asp-soc{background:rgba(123,196,123,.12);}
+.aspect-header.asp-pro{background:rgba(41,98,163,.14);}
+.aspect-header.asp-per{background:rgba(192,88,24,.14);}
+.aspect-header.asp-soc{background:rgba(56,142,56,.14);}
 .aspect-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.aspect-dot.pro{background:#4a90d9;}
-.aspect-dot.per{background:#e8864a;}
-.aspect-dot.soc{background:#7bc47b;}
+.aspect-dot.pro{background:#2962a3;}
+.aspect-dot.per{background:#c05818;}
+.aspect-dot.soc{background:#388e38;}
 .aspect-title{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
-.asp-pro .aspect-title{color:#4a90d9;}
-.asp-per .aspect-title{color:#e8864a;}
-.asp-soc .aspect-title{color:#7bc47b;}
+.asp-pro .aspect-title{color:#2962a3;}
+.asp-per .aspect-title{color:#c05818;}
+.asp-soc .aspect-title{color:#388e38;}
 .aspect-tasks{}
 .aspect-task-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line-soft);background:var(--dia-soft);border-radius:10px;margin-bottom:6px;}
 .aspect-task-item:last-child{border-bottom:none;}
-.at-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.at-check{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--ink-soft);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .at-check.done-c{background:var(--dia);border-color:var(--dia);}
 .at-check svg{width:12px;height:12px;stroke:#fff;stroke-width:3;opacity:0;}
 .at-check.done-c svg{opacity:1;}
@@ -553,8 +553,12 @@ async function syncDown(){
   if(!currentUser)return;
   const{data,error}=await supa.from('ritmo_data').select('*').eq('user_id',currentUser.id).single();
   if(error||!data)return;
-  const map={habits:'habits',lists:'lists',bita:'bita',dia_days:'diaDays',norte:'norte',ruedas:'ruedas'};
+  const map={habits:'habits',lists:'lists',bita:'bita',dia_days:'diaDays',ruedas:'ruedas'};
   Object.entries(map).forEach(([col,key])=>{if(data[col])DB.set(key,data[col]);});
+  // norte: solo sobreescribir si tiene datos válidos
+  if(data.norte&&data.norte.frases){
+    DB.set('norte',data.norte);
+  }
   // pomoCfg: solo sobreescribir si tiene datos válidos
   if(data.pomo_cfg&&data.pomo_cfg.focus){
     DB.set('pomoCfg',{...POMO_DEFAULTS,...data.pomo_cfg});
@@ -916,7 +920,35 @@ function saveDayEntry(entry){
 }
 
 /* sub-tabs */
+/* auto-guardar borrador de mañana y cierre antes de cambiar */
+function autoSaveDraft(){
+  const entry=getDayEntry(activeDayKey);
+  const tk=todayKey();
+  const isPast=activeDayKey<tk;
+  // guardar mañana si es editable
+  if(!isPast){
+    const obj=document.getElementById('d-objetivo');
+    if(obj){
+      entry.manana.objetivo=obj.value;
+      entry.manana.pregunta=document.getElementById('d-pregunta').value;
+      entry.manana.intencion=document.getElementById('d-intencion').value;
+    }
+  }
+  // guardar cierre si es editable
+  const isFuture=activeDayKey>tk;
+  if(!isFuture){
+    const func=document.getElementById('d-funciono');
+    if(func){
+      entry.cierre.funciono=func.value;
+      entry.cierre.fallo=document.getElementById('d-fallo').value;
+      entry.cierre.norepito=document.getElementById('d-norepito').value;
+    }
+  }
+  saveDayEntry(entry);
+}
+
 document.querySelectorAll('.dia-tab').forEach(t=>t.onclick=()=>{
+  autoSaveDraft();
   activeDiaTab=t.dataset.diatab;
   document.querySelectorAll('.dia-tab').forEach(x=>x.classList.toggle('on',x.dataset.diatab===activeDiaTab));
   ['manana','cierre','norte','rueda'].forEach(id=>document.getElementById('diatab-'+id).style.display=id===activeDiaTab?'block':'none');
@@ -938,7 +970,7 @@ function buildDaySel(){
     chip.className='day-chip'+(k===activeDayKey?' on':'');
     if(future)chip.style.opacity='.65';
     chip.innerHTML=`<span class="dc-wd">${label}</span><span class="dc-d">${dd}</span>`;
-    chip.onclick=()=>{activeDayKey=k;buildDaySel();renderDiaContent();};
+    chip.onclick=()=>{autoSaveDraft();activeDayKey=k;buildDaySel();renderDiaContent();};
     sel.appendChild(chip);
   }
   setTimeout(()=>{const on=sel.querySelector('.day-chip.on');if(on)on.scrollIntoView({inline:'center',behavior:'smooth'});},50);
