@@ -193,6 +193,11 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .norte-section .ns-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .norte-section .ns-title{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
 .norte-section .ns-edit{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--dia);padding:4px 10px;border-radius:20px;border:1px solid var(--dia-soft);background:var(--dia-soft);}
+.norte-actions{display:flex;gap:8px;align-items:center;}
+.norte-empty{text-align:center;padding:26px 20px;}
+.norte-empty .em{font-size:30px;display:block;margin-bottom:8px;}
+.norte-empty .empty-title{font-size:18px;font-weight:600;margin-bottom:6px;}
+.norte-empty .empty-text{font-size:15px;line-height:1.45;color:var(--ink-soft);margin-bottom:18px;}
 .norte-item{font-size:16px;line-height:1.5;padding:8px 0;border-bottom:1px solid var(--line-soft);}
 .norte-item:last-child{border-bottom:none;}
 .norte-item::before{content:'→ ';color:var(--dia);font-weight:600;}
@@ -438,6 +443,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
     <div id="diatab-norte" style="display:none">
       <div id="norteView"></div>
       <div id="norteEdit" style="display:none">
+        <button class="btn-ghost" id="norteCancelBtn" style="margin-bottom:14px;font-size:14px;padding:10px 20px;">← Volver</button>
         <div class="card">
           <div class="label" style="margin-bottom:10px">Frases que me inspiran <span style="font-size:11px;color:var(--ink-soft)">(una por línea)</span></div>
           <textarea class="norte-textarea" id="ne-frases" rows="5"></textarea>
@@ -1077,32 +1083,61 @@ document.getElementById('saveCierreBtn').onclick=()=>{
 };
 
 /* ===== NORTE ===== */
+const NORTE_EMPTY={frases:'',cualidades:'',noquiero:'',siquiero:''};
+const NORTE_DEFAULT={
+  frases:'La felicidad tiene que ser compartida.\nLos hábitos tienen que ser funcionales para lo que quieres conseguir.\nNuestras acciones tienen que estar llenas de fe.\nHay que inyectar una emoción fuerte al pensamiento positivo.',
+  cualidades:'Sabe comunicar\nTiene buen físico\nTiene buena energía\nAprovecha el tiempo\nVive en calma',
+  noquiero:'No terminar las tareas\nEstar en bucle con el móvil\nDormir tarde\nMirar el móvil por la noche',
+  siquiero:'Formarme a diario\nPensar\nVisualizarme\nLectura\nTerminar las tareas\nGimnasio por la mañana\nSauna\nPasear y reflexionar'
+};
+function hasNorteData(n){
+  return !!n&&['frases','cualidades','noquiero','siquiero'].some(k=>(n[k]||'').trim());
+}
+function getStoredNorte(){return DB.get('norte',null);}
 function getNorte(){
-  return DB.get('norte',{
-    frases:'La felicidad tiene que ser compartida.\nLos hábitos tienen que ser funcionales para lo que quieres conseguir.\nNuestras acciones tienen que estar llenas de fe.\nHay que inyectar una emoción fuerte al pensamiento positivo.',
-    cualidades:'Sabe comunicar\nTiene buen físico\nTiene buena energía\nAprovecha el tiempo\nVive en calma',
-    noquiero:'No terminar las tareas\nEstar en bucle con el móvil\nDormir tarde\nMirar el móvil por la noche',
-    siquiero:'Formarme a diario\nPensar\nVisualizarme\nLectura\nTerminar las tareas\nGimnasio por la mañana\nSauna\nPasear y reflexionar'
-  });
+  const saved=getStoredNorte();
+  return hasNorteData(saved)?{...NORTE_EMPTY,...saved}:NORTE_DEFAULT;
 }
 function saveNorte(n){DB.set('norte',n);}
 let norteEditing=false;
+let norteCreating=false;
 function renderNorte(){
-  const n=getNorte();
+  const saved=getStoredNorte();
+  const hasSaved=hasNorteData(saved);
+  const n=hasSaved?{...NORTE_EMPTY,...saved}:NORTE_DEFAULT;
   const view=document.getElementById('norteView');
   const edit=document.getElementById('norteEdit');
   if(norteEditing){
+    const draft=norteCreating?NORTE_EMPTY:n;
     view.style.display='none';edit.style.display='block';
-    document.getElementById('ne-frases').value=n.frases;
-    document.getElementById('ne-cualidades').value=n.cualidades;
-    document.getElementById('ne-noquiero').value=n.noquiero;
-    document.getElementById('ne-siquiero').value=n.siquiero;
+    document.getElementById('ne-frases').value=draft.frases;
+    document.getElementById('ne-cualidades').value=draft.cualidades;
+    document.getElementById('ne-noquiero').value=draft.noquiero;
+    document.getElementById('ne-siquiero').value=draft.siquiero;
   }else{
     edit.style.display='none';view.style.display='block';
     const lines=s=>s.split('\n').filter(x=>x.trim());
+    if(!hasSaved){
+      view.innerHTML=`
+        <div class="card norte-empty">
+          <span class="em">🧭</span>
+          <div class="empty-title">Aún no tienes un norte guardado</div>
+          <div class="empty-text">Crea tus frases, cualidades y listas de sí/no para tenerlo siempre a mano.</div>
+          <button class="save-btn" id="norteCreateBtn" type="button" style="padding:13px 28px;">Crear mi norte</button>
+        </div>
+      `;
+      document.getElementById('norteCreateBtn').onclick=()=>{norteCreating=true;norteEditing=true;renderNorte();};
+      return;
+    }
     view.innerHTML=`
       <div class="norte-section">
-        <div class="ns-head"><div class="ns-title">Frases que me inspiran</div><button class="ns-edit" id="norteEditBtn">Editar</button></div>
+        <div class="ns-head">
+          <div class="ns-title">Frases que me inspiran</div>
+          <div class="norte-actions">
+            <button class="ns-edit" id="norteNewBtn" type="button">Nuevo norte</button>
+            <button class="ns-edit" id="norteEditBtn" type="button">Editar</button>
+          </div>
+        </div>
         <div class="card" style="padding:12px 18px">${lines(n.frases).map(l=>`<div class="norte-item">${esc(l)}</div>`).join('')}</div>
       </div>
       <div class="norte-section">
@@ -1120,9 +1155,15 @@ function renderNorte(){
         </div>
       </div>
     `;
-    document.getElementById('norteEditBtn').onclick=()=>{norteEditing=true;renderNorte();};
+    document.getElementById('norteEditBtn').onclick=()=>{norteCreating=false;norteEditing=true;renderNorte();};
+    document.getElementById('norteNewBtn').onclick=()=>{norteCreating=true;norteEditing=true;renderNorte();};
   }
 }
+document.getElementById('norteCancelBtn').onclick=()=>{
+  norteCreating=false;
+  norteEditing=false;
+  renderNorte();
+};
 document.getElementById('saveNorteBtn').onclick=()=>{
   saveNorte({
     frases:document.getElementById('ne-frases').value,
@@ -1130,7 +1171,7 @@ document.getElementById('saveNorteBtn').onclick=()=>{
     noquiero:document.getElementById('ne-noquiero').value,
     siquiero:document.getElementById('ne-siquiero').value
   });
-  norteEditing=false;renderNorte();showToast('✓ Norte guardado');
+  norteCreating=false;norteEditing=false;renderNorte();showToast('✓ Norte guardado');
 };
 
 /* ===== RUEDA (revisión semanal) ===== */
