@@ -71,10 +71,18 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .ring-center .time{font-size:54px;font-weight:600;letter-spacing:-1px;font-variant-numeric:tabular-nums;}
 .ring-center .phase{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);margin-top:2px;}
 .ring-center .cyc{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;color:var(--ink-soft);margin-top:8px;letter-spacing:1px;}
-.controls{display:flex;gap:12px;justify-content:center;margin:20px 0 6px;}
+.controls{display:flex;gap:10px;justify-content:center;margin:20px 0 6px;flex-wrap:wrap;}
 .btn-main{background:var(--accent);color:#fff;font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600;font-size:16px;padding:14px 40px;border-radius:40px;letter-spacing:.5px;box-shadow:0 6px 18px rgba(0,0,0,.14);transition:transform .1s;}
 .btn-main:active{transform:scale(.96);}
 .btn-ghost{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;padding:14px 22px;border-radius:40px;}
+.btn-ghost:disabled{opacity:.45;cursor:default;}
+.pomo-log{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft);}
+.pomo-log:last-child{border-bottom:none;}
+.pomo-log-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--pomodoro);}
+.pomo-log-main{flex:1;min-width:0;}
+.pomo-log-title{font-size:15px;line-height:1.25;}
+.pomo-log-meta{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;color:var(--ink-soft);margin-top:2px;}
+.pomo-log-mins{font-family:ui-sans-serif,system-ui,sans-serif;font-size:16px;font-weight:700;color:var(--pomodoro);}
 .settings-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-soft);}
 .settings-row:last-child{border-bottom:none;}
 .settings-row .name{font-size:16px;}
@@ -97,6 +105,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .progress-num{font-size:38px;font-weight:600;color:var(--habitos);}
 .progress-bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:12px;}
 .progress-fill{height:100%;background:var(--habitos);border-radius:8px;transition:width .4s;}
+.habit-day-tabs{display:flex;background:var(--line-soft);border-radius:14px;padding:3px;margin-bottom:14px;gap:3px;}
+.habit-day-tab{flex:1;font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;padding:9px 4px;border-radius:11px;color:var(--ink-soft);text-align:center;transition:all .2s;}
+.habit-day-tab.on{background:var(--card);color:var(--habitos);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 
 /* BITÁCORA */
 .prompt-chip{display:inline-block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;background:var(--bitacora-soft);color:var(--bitacora);padding:7px 13px;border-radius:20px;margin:0 6px 8px 0;}
@@ -228,7 +239,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .rueda-slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--line);border-radius:6px;outline:none;margin:8px 0 6px;}
 .rueda-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--dia);cursor:pointer;box-shadow:0 2px 8px rgba(176,74,122,.3);}
 .rueda-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--dia);cursor:pointer;border:none;}
-.rueda-note{width:100%;border:none;border-bottom:1.5px solid var(--line-soft);background:transparent;font-size:15px;line-height:1.5;color:var(--ink);outline:none;padding:4px 0 6px;resize:none;font-family:inherit;transition:border-color .2s;}
+.rueda-note{width:100%;border:1.5px solid var(--line-soft);border-radius:10px;background:var(--card);font-size:15px;line-height:1.5;color:var(--ink);outline:none;padding:10px 12px;resize:none;font-family:inherit;transition:border-color .2s;}
 .rueda-note:focus{border-color:var(--dia);}
 .rueda-note::placeholder{color:var(--ink-soft);}
 .rueda-entry{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;border:1px solid var(--line-soft);}
@@ -258,6 +269,15 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .proj-picker-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 .proj-picker-name{font-size:16px;flex:1;}
 .proj-picker-check{color:var(--pomodoro);font-size:18px;}
+.project-form{display:none;margin-top:10px;}
+.project-form.open{display:block;}
+.project-name-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line-soft);font-size:16px;outline:none;background:var(--card);color:var(--ink);font-family:inherit;margin-bottom:12px;}
+.project-name-input:focus{border-color:var(--pomodoro);}
+.color-palette{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;}
+.color-swatch{height:34px;border-radius:12px;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);}
+.color-swatch.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line);}
+.project-form-actions{display:flex;gap:10px;}
+.project-form-actions button{flex:1;}
 
 /* generic */
 .add-btn{width:100%;padding:14px;border-radius:14px;border:1.5px dashed var(--line);color:var(--ink-soft);font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;background:var(--bg-soft);margin-top:4px;}
@@ -318,6 +338,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       </div>
       <div class="controls">
         <button class="btn-main" id="pomoStart">Empezar</button>
+        <button class="btn-ghost" id="pomoSavePartial" disabled>Guardar tramo</button>
         <button class="btn-ghost" id="pomoReset">Reiniciar</button>
       </div>
     </div>
@@ -352,19 +373,33 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="settings-row"><div class="name">Tiempo de foco</div><div style="font-size:22px;font-weight:600;color:var(--pomodoro)" id="statFocus">0 min</div></div>
       <div class="settings-row" style="border-bottom:none"><div class="name">Proyecto principal</div><div style="font-size:15px;font-weight:600;color:var(--ink-soft);text-align:right;max-width:160px;" id="statMainProj">—</div></div>
     </div>
+    <div class="sec-title">Registro de foco</div>
+    <div class="card" id="pomoLogList"></div>
 
     <!-- proyectos -->
     <div class="sec-title">Proyectos</div>
     <div id="proyectosList"></div>
     <button class="add-btn" id="addProyectoBtn">+ Nuevo proyecto</button>
+    <div class="card project-form" id="projectForm">
+      <input class="project-name-input" id="projectNameInput" placeholder="Nombre del proyecto" autocomplete="off">
+      <div class="color-palette" id="projectColorPalette"></div>
+      <div class="project-form-actions">
+        <button class="btn-ghost" id="cancelProyectoBtn" type="button">Cancelar</button>
+        <button class="btn-main" id="saveProyectoBtn" type="button" style="padding:13px 24px;">Guardar</button>
+      </div>
+    </div>
   </section>
 
   <!-- ===== HÁBITOS ===== -->
   <section class="screen" id="s-habitos">
     <div class="head"><h1>Hábitos</h1><div class="date" id="habitDate">—</div></div>
+    <div class="habit-day-tabs">
+      <button class="habit-day-tab on" data-habit-offset="0">Hoy</button>
+      <button class="habit-day-tab" data-habit-offset="1">Ayer</button>
+    </div>
     <div class="card progress-card">
       <div class="progress-num"><span id="habitDoneCount">0</span>/<span id="habitTotal">0</span></div>
-      <div class="label" style="margin-top:4px;">completados hoy</div>
+      <div class="label" id="habitProgressLabel" style="margin-top:4px;">completados hoy</div>
       <div class="progress-bar"><div class="progress-fill" id="habitProgress" style="width:0%"></div></div>
     </div>
     <div id="habitList"></div>
@@ -720,12 +755,16 @@ function updatePomoUI(){
   document.getElementById('ringFg').style.strokeDashoffset=RING_LEN*(1-pomoState.remaining/pomoState.total);
   document.getElementById('ring').classList.toggle('break',pomoState.phase!=='focus');
   document.getElementById('pomoStart').textContent=pomoState.running?'Pausar':'Empezar';
+  const elapsed=pomoState.phase==='focus'?Math.floor((pomoState.total-pomoState.remaining)/60):0;
+  const saveBtn=document.getElementById('pomoSavePartial');
+  saveBtn.disabled=elapsed<1;
+  saveBtn.textContent=elapsed>=1?'Guardar '+elapsed+' min':'Guardar tramo';
 }
 function tick(){if(pomoState.remaining>0){pomoState.remaining--;updatePomoUI();}else phaseEnd();}
 function phaseEnd(){
   clearInterval(pomoState.timer);pomoState.running=false;beep();notify();
   if(pomoState.phase==='focus'){
-    registrarPomodoro(); // ← registra el pomodoro completado
+    registrarPomodoro(); // registra el pomodoro completado
     if(pomoState.cycle>=pomoCfg.cycles){pomoState.phase='long';pomoState.cycle=1;}
     else{pomoState.phase='short';pomoState.cycle++;}
   }else{pomoState.phase='focus';}
@@ -740,6 +779,15 @@ document.getElementById('pomoStart').onclick=()=>{
 };
 function resetPomo(){clearInterval(pomoState.timer);pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null};updatePomoUI();}
 document.getElementById('pomoReset').onclick=resetPomo;
+document.getElementById('pomoSavePartial').onclick=()=>{
+  if(pomoState.phase!=='focus')return;
+  const mins=Math.floor((pomoState.total-pomoState.remaining)/60);
+  if(mins<1)return;
+  clearInterval(pomoState.timer);
+  registrarFoco(mins,false);
+  resetPomo();
+  showToast('✓ Tramo guardado');
+};
 let audioCtx=null;
 function unlockAudio(){if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}
 function beep(){
@@ -760,10 +808,11 @@ function notify(){if('Notification'in window&&Notification.permission==='granted
 if('Notification'in window&&Notification.permission==='default')document.getElementById('pomoStart').addEventListener('click',()=>Notification.requestPermission(),{once:true});
 
 /* ===== PROYECTOS POMODORO ===== */
-const PROY_COLORS=['#d8612f','#3f8f7a','#6a6cc4','#c2982b','#b04a7a','#4a90d9','#e8864a','#7bc47b'];
+const PROY_COLORS=['#d8612f','#3f8f7a','#6a6cc4','#c2982b','#b04a7a','#4a90d9','#e8864a','#7bc47b','#8a5a44','#2f6f88'];
 function getProyectos(){return DB.get('proyectos',[]);}
 function saveProyectos(p){DB.set('proyectos',p);syncLater();}
 let activeProyId=DB.get('activeProyId',null);
+let selectedProjectColor=PROY_COLORS[0];
 
 function renderProyectos(){
   const proyectos=getProyectos();
@@ -818,24 +867,57 @@ function renderPomoStats(){
   }else{
     document.getElementById('statMainProj').textContent='—';
   }
+  renderPomoLogs();
 }
 
-function registrarPomodoro(){
+function getPomoLogs(){return DB.get('pomoLogs',[]);}
+function savePomoLogs(logs){DB.set('pomoLogs',logs);}
+function registrarFoco(mins,completed){
   const tk=todayKey();
   const stats=DB.get('pomoStats',{});
   if(!stats[tk])stats[tk]={pomos:0,mins:0,proyectos:{}};
-  stats[tk].pomos++;
-  stats[tk].mins+=pomoCfg.focus;
+  if(completed)stats[tk].pomos++;
+  stats[tk].mins+=mins;
   if(activeProyId){
-    stats[tk].proyectos[activeProyId]=(stats[tk].proyectos[activeProyId]||0)+pomoCfg.focus;
+    stats[tk].proyectos[activeProyId]=(stats[tk].proyectos[activeProyId]||0)+mins;
     // actualizar proyecto
     const proyectos=getProyectos();
     const p=proyectos.find(x=>x.id===activeProyId);
-    if(p){p.sesiones=(p.sesiones||0)+1;p.minutos=(p.minutos||0)+pomoCfg.focus;saveProyectos(proyectos);}
+    if(p){p.sesiones=(p.sesiones||0)+(completed?1:0);p.minutos=(p.minutos||0)+mins;saveProyectos(proyectos);}
   }
   DB.set('pomoStats',stats);
+  const logs=getPomoLogs();
+  logs.unshift({id:'pl'+Date.now(),date:new Date().toISOString(),day:tk,projectId:activeProyId||null,mins,completed});
+  savePomoLogs(logs.slice(0,80));
   renderPomoStats();
   renderProyectos();
+}
+function registrarPomodoro(){registrarFoco(pomoCfg.focus,true);}
+
+function renderPomoLogs(){
+  const list=document.getElementById('pomoLogList');
+  if(!list)return;
+  const tk=todayKey();
+  const logs=getPomoLogs().filter(l=>l.day===tk).slice(0,5);
+  if(!logs.length){
+    list.innerHTML='<div class="empty" style="padding:12px 0"><span class="em">◷</span>Aún no hay tramos guardados hoy.</div>';
+    return;
+  }
+  const proyectos=getProyectos();
+  list.innerHTML=logs.map(l=>{
+    const p=proyectos.find(x=>x.id===l.projectId);
+    const when=new Date(l.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const color=p?p.color:'var(--ink-soft)';
+    const name=p?p.name:'Sin proyecto';
+    return `<div class="pomo-log">
+      <div class="pomo-log-dot" style="background:${color}"></div>
+      <div class="pomo-log-main">
+        <div class="pomo-log-title">${esc(name)}</div>
+        <div class="pomo-log-meta">${l.completed?'Pomodoro completo':'Tramo guardado'} · ${when}</div>
+      </div>
+      <div class="pomo-log-mins">${l.mins} min</div>
+    </div>`;
+  }).join('');
 }
 
 // picker de proyecto
@@ -858,21 +940,53 @@ document.getElementById('cambiarProjBtn').onclick=()=>{
   picker.style.display='block';
 };
 
-document.getElementById('addProyectoBtn').onclick=()=>{
-  openModal('Nuevo proyecto','Nombre del proyecto',name=>{
-    const proyectos=getProyectos();
-    const color=PROY_COLORS[proyectos.length%PROY_COLORS.length];
-    proyectos.push({id:'p'+Date.now(),name,color,sesiones:0,minutos:0});
-    saveProyectos(proyectos);renderProyectos();
+function renderProjectPalette(){
+  const pal=document.getElementById('projectColorPalette');
+  pal.innerHTML='';
+  PROY_COLORS.forEach(color=>{
+    const b=document.createElement('button');
+    b.className='color-swatch'+(color===selectedProjectColor?' on':'');
+    b.type='button';
+    b.style.background=color;
+    b.onclick=()=>{selectedProjectColor=color;renderProjectPalette();};
+    pal.appendChild(b);
   });
+}
+document.getElementById('addProyectoBtn').onclick=()=>{
+  selectedProjectColor=PROY_COLORS[getProyectos().length%PROY_COLORS.length];
+  document.getElementById('projectNameInput').value='';
+  renderProjectPalette();
+  document.getElementById('projectForm').classList.add('open');
+  document.getElementById('projectNameInput').focus();
 };
+document.getElementById('cancelProyectoBtn').onclick=()=>document.getElementById('projectForm').classList.remove('open');
+document.getElementById('saveProyectoBtn').onclick=()=>{
+  const name=document.getElementById('projectNameInput').value.trim();
+  if(!name)return;
+  const proyectos=getProyectos();
+  proyectos.push({id:'p'+Date.now(),name,color:selectedProjectColor,sesiones:0,minutos:0});
+  saveProyectos(proyectos);
+  document.getElementById('projectForm').classList.remove('open');
+  renderProyectos();
+};
+document.getElementById('projectNameInput').onkeydown=e=>{if(e.key==='Enter')document.getElementById('saveProyectoBtn').click();};
 
 /* ===== HÁBITOS ===== */
 function getHabits(){return DB.get('habits',[]);}
 function saveHabits(h){DB.set('habits',h);}
+let habitDayOffset=0;
+function habitSelectedDate(){
+  const d=new Date();
+  d.setDate(d.getDate()-habitDayOffset);
+  return d;
+}
+function habitSelectedKey(){return keyOf(habitSelectedDate());}
 function renderHabits(){
-  document.getElementById('habitDate').textContent=fmtDate().toUpperCase();
-  const habits=getHabits(),tk=todayKey();
+  const selectedDate=habitSelectedDate();
+  document.getElementById('habitDate').textContent=selectedDate.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+  document.querySelectorAll('.habit-day-tab').forEach(b=>b.classList.toggle('on',parseInt(b.dataset.habitOffset)===habitDayOffset));
+  document.getElementById('habitProgressLabel').textContent=habitDayOffset===0?'completados hoy':'completados ayer';
+  const habits=getHabits(),tk=habitSelectedKey();
   const list=document.getElementById('habitList');list.innerHTML='';
   let done=0;
   if(!habits.length){list.innerHTML='<div class="empty"><span class="em">🌱</span>Aún no tienes hábitos.<br>Empieza con uno pequeño.</div>';}
@@ -897,7 +1011,7 @@ function renderHabits(){
   document.getElementById('habitTotal').textContent=habits.length;
   document.getElementById('habitProgress').style.width=(habits.length?done/habits.length*100:0)+'%';
 }
-function toggleHabit(i){const habits=getHabits(),tk=todayKey();habits[i].log=habits[i].log||[];const idx=habits[i].log.indexOf(tk);if(idx>-1)habits[i].log.splice(idx,1);else habits[i].log.push(tk);saveHabits(habits);renderHabits();}
+function toggleHabit(i){const habits=getHabits(),tk=habitSelectedKey();habits[i].log=habits[i].log||[];const idx=habits[i].log.indexOf(tk);if(idx>-1)habits[i].log.splice(idx,1);else habits[i].log.push(tk);saveHabits(habits);renderHabits();}
 function calcStreak(h){
   if(!h.log||!h.log.length)return 0;
   const set=new Set(h.log);let streak=0;let cur=new Date();
@@ -907,6 +1021,10 @@ function calcStreak(h){
 }
 document.getElementById('addHabitBtn').onclick=()=>openModal('Nuevo hábito','Ej. Meditar 10 min',name=>{
   const h=getHabits();h.push({name,log:[]});saveHabits(h);renderHabits();
+});
+document.querySelectorAll('.habit-day-tab').forEach(b=>b.onclick=()=>{
+  habitDayOffset=parseInt(b.dataset.habitOffset);
+  renderHabits();
 });
 
 /* ===== DÍA ===== */
