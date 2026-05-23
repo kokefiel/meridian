@@ -585,29 +585,36 @@ function hideAuth(){
 }
 
 async function initAuth(){
-  const{data:{session}}=await supa.auth.getSession();
-  if(session){
-    currentUser=session.user;
-    document.getElementById('userEmail').textContent=currentUser.email;
-    await syncDown();
-    hideAuth();
-    initApp();
-  }else{
-    showAuth();
-  }
-  supa.auth.onAuthStateChange(async(event,session)=>{
-    if(event==='SIGNED_IN'&&session){
+  try{
+    const{data:{session},error}=await supa.auth.getSession();
+    if(error)console.error('getSession error:',error);
+    if(session){
       currentUser=session.user;
       document.getElementById('userEmail').textContent=currentUser.email;
       await syncDown();
       hideAuth();
       initApp();
+    }else{
+      showAuth();
     }
-    if(event==='SIGNED_OUT'){currentUser=null;showAuth();}
-  });
+    supa.auth.onAuthStateChange(async(event,session)=>{
+      if(event==='SIGNED_IN'&&session){
+        currentUser=session.user;
+        document.getElementById('userEmail').textContent=currentUser.email;
+        await syncDown();
+        hideAuth();
+        initApp();
+      }
+      if(event==='SIGNED_OUT'){currentUser=null;showAuth();}
+    });
+  }catch(e){
+    console.error('initAuth error:',e);
+    showAuth();
+  }
 }
 
 /* ===== STORAGE ===== */
+const POMO_DEFAULTS={focus:25,short:5,long:15,cycles:4,sound:true};
 const DB={
   get:(k,d)=>{try{return JSON.parse(localStorage.getItem('ritmo_'+k))??d}catch(e){return d}},
   set:(k,v)=>localStorage.setItem('ritmo_'+k,JSON.stringify(v))
@@ -664,7 +671,6 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.go));
 
 /* ===== POMODORO ===== */
 const RING_LEN=678.6;
-const POMO_DEFAULTS={focus:25,short:5,long:15,cycles:4,sound:true};
 let pomoCfg={...POMO_DEFAULTS,...DB.get('pomoCfg',{})};
 // garantizar que todos los campos son válidos
 if(!pomoCfg.focus||isNaN(pomoCfg.focus))pomoCfg.focus=25;
@@ -1303,20 +1309,41 @@ async function authAction(isRegister){
   const email=document.getElementById('authEmail').value.trim();
   const pass=document.getElementById('authPass').value;
   const errEl=document.getElementById('authError');
+  const loginBtn=document.getElementById('authLoginBtn');
+  const regBtn=document.getElementById('authRegisterBtn');
   errEl.style.display='none';
-  if(!email||!pass){errEl.textContent='Rellena email y contraseña.';errEl.style.display='block';return;}
-  let res;
-  if(isRegister){
-    res=await supa.auth.signUp({email,password:pass});
-    if(!res.error&&res.data.user&&!res.data.session){
-      errEl.style.color='#2e7d32';
-      errEl.textContent='¡Cuenta creada! Revisa tu email para confirmar.';
-      errEl.style.display='block';return;
+  if(!email||!pass){errEl.style.color='#c62828';errEl.textContent='Rellena email y contraseña.';errEl.style.display='block';return;}
+  // loading
+  loginBtn.disabled=true;regBtn.disabled=true;
+  loginBtn.textContent=isRegister?'Entrar':'Entrando…';
+  regBtn.textContent=isRegister?'Creando…':'Crear cuenta nueva';
+  try{
+    let res;
+    if(isRegister){
+      res=await supa.auth.signUp({email,password:pass});
+      if(!res.error&&res.data.user&&!res.data.session){
+        errEl.style.color='#2e7d32';
+        errEl.textContent='¡Cuenta creada! Revisa tu email para confirmar.';
+        errEl.style.display='block';
+        loginBtn.disabled=false;regBtn.disabled=false;
+        loginBtn.textContent='Entrar';regBtn.textContent='Crear cuenta nueva';
+        return;
+      }
+    }else{
+      res=await supa.auth.signInWithPassword({email,password:pass});
     }
-  }else{
-    res=await supa.auth.signInWithPassword({email,password:pass});
+    if(res.error){
+      errEl.style.color='#c62828';
+      errEl.textContent=res.error.message;
+      errEl.style.display='block';
+    }
+  }catch(e){
+    errEl.style.color='#c62828';
+    errEl.textContent='Error de conexión. Comprueba tu internet.';
+    errEl.style.display='block';
   }
-  if(res.error){errEl.style.color='#c62828';errEl.textContent=res.error.message;errEl.style.display='block';}
+  loginBtn.disabled=false;regBtn.disabled=false;
+  loginBtn.textContent='Entrar';regBtn.textContent='Crear cuenta nueva';
 }
 document.getElementById('authLoginBtn').onclick=()=>authAction(false);
 document.getElementById('authRegisterBtn').onclick=()=>authAction(true);
