@@ -26,6 +26,7 @@
   --tasks:#c2982b;--tasks-soft:#f7eed3;
   --dia:#b04a7a;--dia-soft:#f5e0ec;
   --accent:var(--pomodoro);--accent-soft:var(--pomodoro-soft);
+  --pomo-active:var(--pomodoro);--pomo-active-soft:var(--pomodoro-soft);
   --r:18px;
   --shadow:0 1px 2px rgba(43,40,35,.04),0 6px 20px rgba(43,40,35,.05);
   --safe-bottom:env(safe-area-inset-bottom,0px);
@@ -65,7 +66,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .ring{position:relative;width:240px;height:240px;}
 .ring svg{transform:rotate(-90deg);}
 .ring .bg-ring{stroke:var(--line);}
-.ring .fg-ring{stroke:var(--pomodoro);stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .4s;}
+.ring .fg-ring{stroke:var(--pomo-active);stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .4s;}
 .ring.break .fg-ring{stroke:var(--habitos);}
 .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .ring-center .time{font-size:54px;font-weight:600;letter-spacing:-1px;font-variant-numeric:tabular-nums;}
@@ -76,6 +77,15 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .btn-main:active{transform:scale(.96);}
 .btn-ghost{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;padding:14px 22px;border-radius:40px;}
 .btn-ghost:disabled{opacity:.45;cursor:default;}
+#s-pomodoro .head .dot{background:var(--pomo-active);}
+#s-pomodoro .ring-center .time{color:var(--pomo-active);}
+#s-pomodoro .btn-main{background:var(--pomo-active);box-shadow:0 6px 18px color-mix(in srgb,var(--pomo-active) 28%,transparent);}
+#s-pomodoro .btn-ghost:not(:disabled){color:var(--pomo-active);border-color:var(--pomo-active-soft);}
+#s-pomodoro .stepper button{background:var(--pomo-active-soft);color:var(--pomo-active);}
+.pomo-project-strip{width:100%;margin-top:14px;padding:10px 12px;border:1px solid var(--pomo-active-soft);background:color-mix(in srgb,var(--pomo-active) 8%,var(--card));border-radius:16px;}
+.pomo-project-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.pomo-project-current{display:flex;align-items:center;gap:10px;min-width:0;}
+.pomo-project-label{font-family:ui-sans-serif,system-ui,sans-serif;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px;}
 .pomo-log{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft);}
 .pomo-log:last-child{border-bottom:none;}
 .pomo-log-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--pomodoro);}
@@ -230,20 +240,35 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .saved-toast.show{opacity:1;}
 
 /* RUEDA */
-.rueda-area{margin-bottom:20px;}
+.rueda-area{margin-bottom:28px;}
 .rueda-area:last-child{margin-bottom:4px;}
-.rueda-area-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.rueda-area-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .rueda-area-icon{font-size:20px;width:28px;text-align:center;}
 .rueda-area-name{font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;color:var(--ink);flex:1;}
 .rueda-area-score{font-family:ui-sans-serif,system-ui,sans-serif;font-size:20px;font-weight:700;color:var(--dia);min-width:28px;text-align:right;}
-.rueda-slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--line);border-radius:6px;outline:none;margin:8px 0 6px;}
+.rueda-slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--line);border-radius:6px;outline:none;margin:10px 0 22px;}
 .rueda-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--dia);cursor:pointer;box-shadow:0 2px 8px rgba(176,74,122,.3);}
 .rueda-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--dia);cursor:pointer;border:none;}
-.rueda-note{width:100%;border:1.5px solid var(--line-soft);border-radius:10px;background:var(--card);font-size:15px;line-height:1.5;color:var(--ink);outline:none;padding:10px 12px;resize:none;font-family:inherit;transition:border-color .2s;}
+.rueda-note{width:100%;border:1.5px solid var(--line-soft);border-radius:10px;background:var(--card);font-size:15px;line-height:1.55;color:var(--ink);outline:none;padding:12px 14px;resize:none;font-family:inherit;transition:border-color .2s;min-height:74px;}
 .rueda-note:focus{border-color:var(--dia);}
 .rueda-note::placeholder{color:var(--ink-soft);}
 .rueda-entry{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;border:1px solid var(--line-soft);}
 .rueda-entry .re-date{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dia);margin-bottom:10px;}
+.rueda-summary{display:flex;align-items:center;gap:14px;cursor:pointer;}
+.rueda-summary-main{flex:1;min-width:0;}
+.rueda-summary-title{font-size:17px;font-weight:600;line-height:1.25;}
+.rueda-summary-date{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dia);margin-top:4px;}
+.rueda-summary-score{font-family:ui-sans-serif,system-ui,sans-serif;font-size:24px;font-weight:700;color:var(--dia);min-width:34px;text-align:right;}
+.rueda-summary-go{font-family:ui-sans-serif,system-ui,sans-serif;color:var(--ink-soft);font-size:22px;}
+.rueda-detail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;}
+.rueda-detail-title{font-size:22px;font-weight:600;line-height:1.2;}
+.rueda-detail-date{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dia);margin-top:4px;}
+.rueda-detail-area{padding:14px 0;border-bottom:1px solid var(--line-soft);}
+.rueda-detail-area:last-child{border-bottom:none;}
+.rueda-detail-row{display:grid;grid-template-columns:30px 1fr 38px;align-items:center;gap:10px;margin-bottom:10px;}
+.rueda-detail-name{font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;color:var(--ink);}
+.rueda-detail-note{font-size:15px;line-height:1.5;background:var(--bg-soft);border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px;margin-top:10px;white-space:pre-wrap;}
+.rueda-save-bar{position:static;margin:24px 0 30px;}
 .rueda-entry .re-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
 .rueda-entry .re-row:last-child{border-bottom:none;}
 .re-icon{font-size:16px;width:24px;text-align:center;}
@@ -252,8 +277,8 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .re-bar{flex:2;height:6px;background:var(--line);border-radius:6px;overflow:hidden;}
 .re-bar-fill{height:100%;background:var(--dia);border-radius:6px;transition:width .3s;}
 .re-note{font-size:13px;color:var(--ink-soft);padding-left:34px;margin-top:-2px;margin-bottom:4px;font-style:italic;}
-.re-empujar{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:14px;line-height:1.5;}
-.re-empujar-label{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;}
+.re-empujar{margin-top:18px;padding:14px 16px;border:1px solid var(--dia-soft);border-radius:14px;background:color-mix(in srgb,var(--dia) 7%,var(--card));font-size:16px;line-height:1.55;}
+.re-empujar-label{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dia);margin-bottom:8px;font-weight:600;}
 .re-del{float:right;color:var(--ink-soft);opacity:.35;font-size:16px;padding:4px 8px;margin:-8px -8px 0 0;}
 
 /* PROYECTOS POMODORO */
@@ -341,6 +366,19 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
         <button class="btn-ghost" id="pomoSavePartial" disabled>Guardar tramo</button>
         <button class="btn-ghost" id="pomoReset">Reiniciar</button>
       </div>
+      <div class="pomo-project-strip" id="proyectoSelector">
+        <div class="pomo-project-row">
+          <div class="pomo-project-current">
+            <div class="proy-dot" id="activeProjDot" style="width:12px;height:12px;border-radius:50%;background:var(--ink-soft);flex-shrink:0;"></div>
+            <div style="min-width:0;">
+              <div class="pomo-project-label">Proyecto activo</div>
+              <div id="activeProjName" style="font-size:17px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Sin proyecto</div>
+            </div>
+          </div>
+          <button id="cambiarProjBtn" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--pomo-active);padding:6px 14px;border-radius:20px;border:1px solid var(--pomo-active-soft);background:var(--card);">Cambiar</button>
+        </div>
+        <div id="projPickerList" style="display:none;margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px;"></div>
+      </div>
     </div>
     <div class="sec-title">Configuración</div>
     <div class="card">
@@ -351,26 +389,11 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="settings-row"><div class="name">Sonido</div><div class="stepper"><button id="soundToggle" style="width:auto;border-radius:30px;padding:0 18px;height:32px;font-size:13px;font-weight:600;">Activado</button></div></div>
     </div>
 
-    <!-- selector de proyecto activo -->
-    <div class="sec-title">Proyecto activo</div>
-    <div class="card" style="padding:14px 18px;">
-      <div id="proyectoSelector">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="proy-dot" id="activeProjDot" style="width:12px;height:12px;border-radius:50%;background:var(--ink-soft);flex-shrink:0;"></div>
-            <div id="activeProjName" style="font-size:17px;color:var(--ink-soft);">Sin proyecto</div>
-          </div>
-          <button id="cambiarProjBtn" style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--pomodoro);padding:6px 14px;border-radius:20px;border:1px solid var(--pomodoro-soft);background:var(--pomodoro-soft);">Cambiar</button>
-        </div>
-        <div id="projPickerList" style="display:none;margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px;"></div>
-      </div>
-    </div>
-
     <!-- resumen del día -->
     <div class="sec-title">Hoy</div>
     <div class="card">
-      <div class="settings-row"><div class="name">Pomodoros completados</div><div style="font-size:22px;font-weight:600;color:var(--pomodoro)" id="statPomos">0</div></div>
-      <div class="settings-row"><div class="name">Tiempo de foco</div><div style="font-size:22px;font-weight:600;color:var(--pomodoro)" id="statFocus">0 min</div></div>
+      <div class="settings-row"><div class="name">Pomodoros completados</div><div style="font-size:22px;font-weight:600;color:var(--pomo-active)" id="statPomos">0</div></div>
+      <div class="settings-row"><div class="name">Tiempo de foco</div><div style="font-size:22px;font-weight:600;color:var(--pomo-active)" id="statFocus">0 min</div></div>
       <div class="settings-row" style="border-bottom:none"><div class="name">Proyecto principal</div><div style="font-size:15px;font-weight:600;color:var(--ink-soft);text-align:right;max-width:160px;" id="statMainProj">—</div></div>
     </div>
     <div class="sec-title">Registro de foco</div>
@@ -496,6 +519,12 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
     <div id="diatab-rueda" style="display:none">
       <div id="ruedaForm" style="display:none">
         <button class="btn-ghost" id="ruedaBack" style="margin-bottom:14px;font-size:14px;padding:10px 20px;">← Volver</button>
+        <div class="card">
+          <div class="dia-field" style="margin-bottom:0">
+            <label>Título de la revisión</label>
+            <input id="rueda-title" placeholder="Ej. Revisión semanal">
+          </div>
+        </div>
         <div class="card" id="ruedaAreasCard"></div>
         <div class="card">
           <div class="dia-field" style="margin-bottom:0">
@@ -503,8 +532,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
             <textarea id="rueda-empujar" rows="3" placeholder="El área o acción concreta que quiero impulsar…"></textarea>
           </div>
         </div>
-        <div class="save-bar"><button class="save-btn" id="saveRuedaBtn">Guardar revisión</button></div>
+        <div class="save-bar rueda-save-bar"><button class="save-btn" id="saveRuedaBtn">Guardar revisión</button></div>
       </div>
+      <div id="ruedaDetail" style="display:none"></div>
       <div id="ruedaList"></div>
       <button class="add-btn" id="newRuedaBtn" style="margin-bottom:16px">+ Nueva revisión</button>
     </div>
@@ -734,7 +764,7 @@ function renderPomoCfg(){
   ['focus','short','long','cycles'].forEach(k=>document.getElementById('v-'+k).textContent=pomoCfg[k]);
   const sb=document.getElementById('soundToggle');
   sb.textContent=pomoCfg.sound?'Activado':'Silencio';
-  sb.style.background=pomoCfg.sound?'var(--pomodoro)':'var(--line)';
+  sb.style.background=pomoCfg.sound?'var(--pomo-active)':'var(--line)';
   sb.style.color=pomoCfg.sound?'#fff':'var(--ink-soft)';
 }
 document.querySelectorAll('.stepper button[data-k]').forEach(b=>b.onclick=()=>{
@@ -814,8 +844,21 @@ function saveProyectos(p){DB.set('proyectos',p);syncLater();}
 let activeProyId=DB.get('activeProyId',null);
 let selectedProjectColor=PROY_COLORS[0];
 
+function softColor(hex){
+  return /^#[0-9a-f]{6}$/i.test(hex)?hex+'24':'var(--pomodoro-soft)';
+}
+function updatePomoProjectColor(){
+  const activo=getProyectos().find(p=>p.id===activeProyId)||null;
+  const color=activo?activo.color:'var(--pomodoro)';
+  const soft=activo?softColor(activo.color):'var(--pomodoro-soft)';
+  document.documentElement.style.setProperty('--pomo-active',color);
+  document.documentElement.style.setProperty('--pomo-active-soft',soft);
+}
+
 function renderProyectos(){
   const proyectos=getProyectos();
+  updatePomoProjectColor();
+  renderPomoCfg();
   // actualizar selector activo
   const activo=proyectos.find(p=>p.id===activeProyId)||null;
   document.getElementById('activeProjDot').style.background=activo?activo.color:'var(--ink-soft)';
@@ -1305,6 +1348,7 @@ function getRuedas(){return DB.get('ruedas',[]);}
 function saveRuedas(r){DB.set('ruedas',r);}
 let ruedaEditing=false;
 let ruedaDraft={};
+let ruedaDetailIndex=null;
 
 function renderRueda(){
   renderRuedaForm();
@@ -1315,7 +1359,10 @@ function renderRuedaForm(){
   const form=document.getElementById('ruedaForm');
   const card=document.getElementById('ruedaAreasCard');
   if(!ruedaEditing){form.style.display='none';return;}
+  ruedaDetailIndex=null;
   form.style.display='block';
+  document.getElementById('ruedaList').style.display='none';
+  document.getElementById('ruedaDetail').style.display='none';
   card.innerHTML='';
   RUEDA_AREAS.forEach(a=>{
     const score=ruedaDraft[a.id]||5;
@@ -1343,6 +1390,12 @@ function renderRuedaForm(){
 
 function renderRuedaList(){
   const list=document.getElementById('ruedaList');list.innerHTML='';
+  const detail=document.getElementById('ruedaDetail');
+  if(ruedaEditing){list.style.display='none';return;}
+  if(ruedaDetailIndex!==null){list.style.display='none';renderRuedaDetail();return;}
+  list.style.display='block';
+  detail.style.display='none';
+  document.getElementById('newRuedaBtn').style.display='block';
   const ruedas=getRuedas();
   if(!ruedas.length&&!ruedaEditing){
     list.innerHTML='<div class="empty"><span class="em">🧭</span>Aún no tienes revisiones.<br>Empieza tu primera revisión semanal.</div>';
@@ -1350,37 +1403,80 @@ function renderRuedaList(){
   ruedas.forEach((r,i)=>{
     const d=new Date(r.date);
     const el=document.createElement('div');el.className='rueda-entry';
-    let rows='';
-    RUEDA_AREAS.forEach(a=>{
-      const s=r.areas[a.id]||0;
-      const n=r.areas[a.id+'_note']||'';
-      rows+=`<div class="re-row">
-        <div class="re-icon">${a.icon}</div>
-        <div class="re-name">${a.name}</div>
-        <div class="re-bar"><div class="re-bar-fill" style="width:${s*10}%"></div></div>
-        <div class="re-score">${s}</div>
-      </div>`;
-      if(n)rows+=`<div class="re-note">${esc(n)}</div>`;
-    });
-    let empujarHtml='';
-    if(r.empujar){empujarHtml=`<div class="re-empujar"><div class="re-empujar-label">🧭 Empujar esta semana</div>${esc(r.empujar)}</div>`;}
+    const avg=ruedaAverage(r);
+    const title=r.title||'Revisión semanal';
     el.innerHTML=`<button class="re-del" type="button">✕</button>
-      <div class="re-date">${d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
-      ${rows}${empujarHtml}`;
+      <div class="rueda-summary">
+        <div class="rueda-summary-main">
+          <div class="rueda-summary-title">${esc(title)}</div>
+          <div class="rueda-summary-date">${d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <div class="rueda-summary-score">${avg}</div>
+        <div class="rueda-summary-go">›</div>
+      </div>`;
+    el.querySelector('.rueda-summary').addEventListener('click',function(){
+      ruedaDetailIndex=i;
+      renderRueda();
+    });
     el.querySelector('.re-del').addEventListener('click',function(e){
       e.stopPropagation();
       appConfirm('¿Eliminar esta revisión?',function(){
-        const fresh=getRuedas();fresh.splice(i,1);saveRuedas(fresh);renderRuedaList();
+        const fresh=getRuedas();fresh.splice(i,1);saveRuedas(fresh);ruedaDetailIndex=null;renderRuedaList();
       });
     });
     list.appendChild(el);
   });
 }
 
+function ruedaAverage(r){
+  const vals=RUEDA_AREAS.map(a=>parseInt((r.areas||{})[a.id]||0)).filter(Boolean);
+  if(!vals.length)return 0;
+  return Math.round(vals.reduce((sum,n)=>sum+n,0)/vals.length);
+}
+
+function renderRuedaDetail(){
+  const detail=document.getElementById('ruedaDetail');
+  const r=getRuedas()[ruedaDetailIndex];
+  if(!r){ruedaDetailIndex=null;renderRuedaList();return;}
+  const d=new Date(r.date);
+  const title=r.title||'Revisión semanal';
+  let areasHtml='';
+  RUEDA_AREAS.forEach(a=>{
+    const s=(r.areas||{})[a.id]||0;
+    const n=(r.areas||{})[a.id+'_note']||'';
+    areasHtml+=`<div class="rueda-detail-area">
+      <div class="rueda-detail-row">
+        <div class="re-icon">${a.icon}</div>
+        <div class="rueda-detail-name">${a.name}</div>
+        <div class="re-score">${s}</div>
+      </div>
+      <div class="re-bar"><div class="re-bar-fill" style="width:${s*10}%"></div></div>
+      ${n?`<div class="rueda-detail-note">${esc(n)}</div>`:''}
+    </div>`;
+  });
+  detail.style.display='block';
+  document.getElementById('newRuedaBtn').style.display='none';
+  detail.innerHTML=`<button class="btn-ghost" id="ruedaDetailBack" style="margin-bottom:14px;font-size:14px;padding:10px 20px;">← Volver</button>
+    <div class="card">
+      <div class="rueda-detail-head">
+        <div>
+          <div class="rueda-detail-title">${esc(title)}</div>
+          <div class="rueda-detail-date">${d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <div class="rueda-summary-score">${ruedaAverage(r)}</div>
+      </div>
+      ${areasHtml}
+      ${r.empujar?`<div class="re-empujar"><div class="re-empujar-label">🧭 Empujar esta semana</div>${esc(r.empujar)}</div>`:''}
+    </div>`;
+  document.getElementById('ruedaDetailBack').onclick=()=>{ruedaDetailIndex=null;renderRueda();};
+}
+
 document.getElementById('newRuedaBtn').addEventListener('click',function(){
   ruedaEditing=true;
+  ruedaDetailIndex=null;
   ruedaDraft={};
   RUEDA_AREAS.forEach(a=>{ruedaDraft[a.id]=5;ruedaDraft[a.id+'_note']='';});
+  document.getElementById('rueda-title').value='Revisión semanal';
   document.getElementById('rueda-empujar').value='';
   renderRuedaForm();
   this.style.display='none';
@@ -1391,15 +1487,18 @@ document.getElementById('ruedaBack').addEventListener('click',function(){
   ruedaDraft={};
   document.getElementById('ruedaForm').style.display='none';
   document.getElementById('newRuedaBtn').style.display='block';
+  renderRueda();
 });
 
 document.getElementById('saveRuedaBtn').addEventListener('click',function(){
+  const title=document.getElementById('rueda-title').value.trim()||'Revisión semanal';
   const empujar=document.getElementById('rueda-empujar').value.trim();
-  const entry={date:new Date().toISOString(),areas:{...ruedaDraft},empujar:empujar};
+  const entry={date:new Date().toISOString(),title:title,areas:{...ruedaDraft},empujar:empujar};
   const ruedas=getRuedas();
   ruedas.unshift(entry);
   saveRuedas(ruedas);
   ruedaEditing=false;
+  ruedaDetailIndex=null;
   ruedaDraft={};
   document.getElementById('newRuedaBtn').style.display='block';
   renderRueda();
