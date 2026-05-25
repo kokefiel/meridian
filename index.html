@@ -624,7 +624,14 @@ let currentUser=null;
 async function syncDown(){
   if(!currentUser)return;
   const{data,error}=await supa.from('ritmo_data').select('*').eq('user_id',currentUser.id).single();
-  if(error||!data)return;
+  if(error||!data){
+    if(error)console.error('syncDown error:',error);
+    return;
+  }
+  if(data.app_state&&Object.keys(data.app_state).length){
+    applyAppState(data.app_state);
+    return;
+  }
   const map={habits:'habits',lists:'lists',bita:'bita',ruedas:'ruedas'};
   Object.entries(map).forEach(([col,key])=>{if(data[col])DB.set(key,data[col]);});
   // Mi día: mezclar servidor + local para no perder notas recientes si Supabase trae una copia antigua.
@@ -644,17 +651,23 @@ async function syncDown(){
 // Sube todos los datos locales a Supabase
 async function syncUp(){
   if(!currentUser)return;
+  const appState=collectAppState();
   const payload={
     user_id:currentUser.id,
-    habits:DB.get('habits',[]),
-    lists:DB.get('lists',[{name:'Mi lista',tasks:[]}]),
-    bita:DB.get('bita',[]),
-    dia_days:DB.get('diaDays',[]),
-    norte:DB.get('norte',{}),
-    ruedas:DB.get('ruedas',[]),
-    pomo_cfg:DB.get('pomoCfg',{})
+    app_state:appState,
+    habits:appState.habits,
+    lists:appState.lists,
+    bita:appState.bita,
+    dia_days:appState.diaDays,
+    norte:appState.norte,
+    ruedas:appState.ruedas,
+    pomo_cfg:appState.pomoCfg
   };
-  await supa.from('ritmo_data').upsert(payload,{onConflict:'user_id'});
+  const{error}=await supa.from('ritmo_data').upsert(payload,{onConflict:'user_id'});
+  if(error){
+    console.error('syncUp error:',error);
+    showToast('⚠ Error sincronizando');
+  }
 }
 
 // Versión de save que también sube a Supabase (sin bloquear UI)
@@ -705,6 +718,48 @@ const DB={
   get:(k,d)=>{try{return JSON.parse(localStorage.getItem('ritmo_'+k))??d}catch(e){return d}},
   set:(k,v)=>localStorage.setItem('ritmo_'+k,JSON.stringify(v))
 };
+const SYNC_KEYS=[
+  'habits',
+  'lists',
+  'activeList',
+  'bita',
+  'diaDays',
+  'norte',
+  'ruedas',
+  'pomoCfg',
+  'proyectos',
+  'activeProyId',
+  'pomoStats',
+  'pomoLogs'
+];
+const SYNC_DEFAULTS={
+  habits:[],
+  lists:[{name:'Mi lista',tasks:[]}],
+  activeList:0,
+  bita:[],
+  diaDays:[],
+  norte:{},
+  ruedas:[],
+  pomoCfg:POMO_DEFAULTS,
+  proyectos:[],
+  activeProyId:null,
+  pomoStats:{},
+  pomoLogs:[]
+};
+function collectAppState(){
+  const state={};
+  SYNC_KEYS.forEach(k=>{state[k]=DB.get(k,SYNC_DEFAULTS[k]);});
+  state.updatedAt=new Date().toISOString();
+  return state;
+}
+function applyAppState(state){
+  if(!state||typeof state!=='object')return;
+  SYNC_KEYS.forEach(k=>{
+    if(!Object.prototype.hasOwnProperty.call(state,k))return;
+    if(k==='diaDays')DB.set(k,mergeDiaDays(DB.get('diaDays',[]),state[k]));
+    else DB.set(k,state[k]);
+  });
+}
 const todayKey=()=>keyOf(new Date());
 function keyOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function cleanText(v){return typeof v==='string'?v:'';}
@@ -955,7 +1010,7 @@ function renderProyectos(){
       e.stopPropagation();
       appConfirm('¿Eliminar "'+p.name+'"?',()=>{
         const fresh=getProyectos();fresh.splice(i,1);saveProyectos(fresh);
-        if(activeProyId===p.id){activeProyId=null;DB.set('activeProyId',null);}
+        if(activeProyId===p.id){activeProyId=null;DB.set('activeProyId',null);syncLater();}
         renderProyectos();renderPomoStats();
       });
     });
@@ -1043,12 +1098,12 @@ document.getElementById('cambiarProjBtn').onclick=()=>{
   // opción "sin proyecto"
   const none=document.createElement('div');none.className='proj-picker-item';
   none.innerHTML=`<div class="proj-picker-dot" style="background:var(--ink-soft)"></div><div class="proj-picker-name" style="color:var(--ink-soft)">Sin proyecto</div>${!activeProyId?'<div class="proj-picker-check">✓</div>':''}`;
-  none.onclick=()=>{activeProyId=null;DB.set('activeProyId',null);picker.style.display='none';renderProyectos();};
+  none.onclick=()=>{activeProyId=null;DB.set('activeProyId',null);syncLater();picker.style.display='none';renderProyectos();};
   picker.appendChild(none);
   proyectos.forEach(p=>{
     const item=document.createElement('div');item.className='proj-picker-item';
     item.innerHTML=`<div class="proj-picker-dot" style="background:${p.color}"></div><div class="proj-picker-name">${esc(p.name)}</div>${activeProyId===p.id?'<div class="proj-picker-check">✓</div>':''}`;
-    item.onclick=()=>{activeProyId=p.id;DB.set('activeProyId',p.id);picker.style.display='none';renderProyectos();};
+    item.onclick=()=>{activeProyId=p.id;DB.set('activeProyId',p.id);syncLater();picker.style.display='none';renderProyectos();};
     picker.appendChild(item);
   });
   picker.style.display='block';
@@ -1631,12 +1686,12 @@ function renderTasks(){
   const tabs=document.getElementById('listTabs');tabs.innerHTML='';
   lists.forEach((l,i)=>{
     const c=document.createElement('button');c.className='list-chip'+(i===activeList?' on':'');c.textContent=l.name;
-    c.onclick=()=>{activeList=i;DB.set('activeList',i);renderTasks();};
+    c.onclick=()=>{activeList=i;DB.set('activeList',i);syncLater();renderTasks();};
     let to;c.onpointerdown=()=>{to=setTimeout(()=>renameList(i),550);};c.onpointerup=c.onpointerleave=()=>clearTimeout(to);
     tabs.appendChild(c);
   });
   const add=document.createElement('button');add.className='list-chip add';add.textContent='+ Lista';
-  add.onclick=()=>openModal('Nueva lista','Nombre',name=>{const ls=getLists();ls.push({name,tasks:[]});saveLists(ls);activeList=ls.length-1;DB.set('activeList',activeList);renderTasks();});
+  add.onclick=()=>openModal('Nueva lista','Nombre',name=>{const ls=getLists();ls.push({name,tasks:[]});saveLists(ls);activeList=ls.length-1;DB.set('activeList',activeList);syncLater();renderTasks();});
   tabs.appendChild(add);
   const list=lists[activeList];
   const cont=document.getElementById('taskList');cont.innerHTML='';
@@ -1729,6 +1784,8 @@ const _origSaveDiaDays=saveDiaDays;
 saveDiaDays=a=>{_origSaveDiaDays(a);syncLater();};
 const _origSaveNorte=saveNorte;
 saveNorte=n=>{_origSaveNorte(n);syncLater();};
+const _origSavePomoLogs=savePomoLogs;
+savePomoLogs=l=>{_origSavePomoLogs(l);syncLater();};
 
 /* Arrancar */
 initAuth();
