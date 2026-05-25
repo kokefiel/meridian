@@ -168,7 +168,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 /* campos de día */
 .dia-field{margin-bottom:16px;}
 .dia-field label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dia);margin-bottom:8px;background:var(--dia-soft);padding:8px 12px;border-radius:10px;font-weight:600;}
-.dia-field textarea,.dia-field input{width:100%;border:1.5px solid var(--line-soft);background:var(--card);font-size:16px;line-height:1.5;color:var(--ink);outline:none;padding:10px 12px;resize:none;transition:border-color .2s;border-radius:10px;}
+.dia-field textarea,.dia-field input{width:100%;border:1.5px solid var(--line-soft);background:var(--card);font-size:16px;line-height:1.5;color:var(--ink);outline:none;padding:12px 12px;resize:none;transition:border-color .2s;border-radius:10px;}
+.dia-field textarea{min-height:84px;}
+.dia-field input{min-height:46px;}
 .dia-field textarea:focus,.dia-field input:focus{border-color:var(--dia);}
 .dia-field textarea::placeholder,.dia-field input::placeholder{color:var(--ink-soft);}
 
@@ -187,7 +189,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .asp-per .aspect-title{color:#c05818;}
 .asp-soc .aspect-title{color:#388e38;}
 .aspect-tasks{}
-.aspect-task-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line-soft);background:var(--dia-soft);border-radius:10px;margin-bottom:6px;}
+.aspect-task-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line-soft);background:#f7e6f0;border-radius:10px;margin-bottom:6px;}
 .aspect-task-item:last-child{border-bottom:none;}
 .at-check{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--ink-soft);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .at-check.done-c{background:var(--dia);border-color:var(--dia);}
@@ -452,9 +454,13 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
           <label>→ Mi pequeño objetivo del día es</label>
           <textarea id="d-objetivo" rows="2" placeholder="Una cosa concreta que quiero conseguir hoy…"></textarea>
         </div>
-        <div class="dia-field" style="margin-bottom:0">
+        <div class="dia-field">
           <label>Mi pregunta de hoy</label>
           <input id="d-pregunta" placeholder="La pregunta que me hago hoy…">
+        </div>
+        <div class="dia-field" style="margin-bottom:0">
+          <label>Respuesta a mi pregunta</label>
+          <textarea id="d-respuesta" rows="2" placeholder="Cuando tenga claridad, anoto aquí mi respuesta…"></textarea>
         </div>
       </div>
       <div class="card">
@@ -776,6 +782,7 @@ function normalizeDayEntry(d){
     manana:{
       objetivo:cleanText(d&&d.manana&&d.manana.objetivo),
       pregunta:cleanText(d&&d.manana&&d.manana.pregunta),
+      respuesta:cleanText(d&&d.manana&&d.manana.respuesta),
       intencion:cleanText(d&&d.manana&&d.manana.intencion),
       tasks:{
         pro:preferTasks(d&&d.manana&&d.manana.tasks&&d.manana.tasks.pro,[]),
@@ -801,6 +808,7 @@ function mergeDayEntry(local,remote){
     manana:{
       objetivo:preferText(l.manana.objetivo,r.manana.objetivo),
       pregunta:preferText(l.manana.pregunta,r.manana.pregunta),
+      respuesta:preferText(l.manana.respuesta,r.manana.respuesta),
       intencion:preferText(l.manana.intencion,r.manana.intencion),
       tasks:{
         pro:preferTasks(l.manana.tasks.pro,r.manana.tasks.pro),
@@ -1206,7 +1214,7 @@ function saveDiaDays(arr){
   const sorted=arr.sort((a,b)=>b.key.localeCompare(a.key)).slice(0,7);
   DB.set('diaDays',sorted);
 }
-function getDayEntry(key){return getDiaDays().find(d=>d.key===key)||{key,manana:{objetivo:'',pregunta:'',intencion:'',tasks:{pro:[],per:[],soc:[]}},cierre:{funciono:'',fallo:'',norepito:''}};}
+function getDayEntry(key){return getDiaDays().find(d=>d.key===key)||{key,manana:{objetivo:'',pregunta:'',respuesta:'',intencion:'',tasks:{pro:[],per:[],soc:[]}},cierre:{funciono:'',fallo:'',norepito:''}};}
 function saveDayEntry(entry){
   entry=normalizeDayEntry({...entry,updatedAt:new Date().toISOString()});
   const days=getDiaDays().filter(d=>d.key!==entry.key);
@@ -1225,6 +1233,7 @@ function autoSaveDraft(){
     if(obj){
       entry.manana.objetivo=obj.value;
       entry.manana.pregunta=document.getElementById('d-pregunta').value;
+      entry.manana.respuesta=document.getElementById('d-respuesta').value;
       entry.manana.intencion=document.getElementById('d-intencion').value;
     }
   }
@@ -1287,8 +1296,9 @@ function renderDiaContent(){
     const m=entry.manana;
     document.getElementById('d-objetivo').value=m.objetivo||'';
     document.getElementById('d-pregunta').value=m.pregunta||'';
+    document.getElementById('d-respuesta').value=m.respuesta||'';
     document.getElementById('d-intencion').value=m.intencion||'';
-    ['d-objetivo','d-pregunta','d-intencion'].forEach(id=>{document.getElementById(id).readOnly=!editableManana;});
+    ['d-objetivo','d-pregunta','d-respuesta','d-intencion'].forEach(id=>{document.getElementById(id).readOnly=!editableManana;});
     renderAspectTasks(entry,editableManana);
     document.getElementById('saveDayBtn').style.display=editableManana?'inline-flex':'none';
     // etiqueta del botón según día
@@ -1358,6 +1368,7 @@ document.getElementById('saveDayBtn').onclick=()=>{
   const entry=getDayEntry(activeDayKey);
   entry.manana.objetivo=document.getElementById('d-objetivo').value;
   entry.manana.pregunta=document.getElementById('d-pregunta').value;
+  entry.manana.respuesta=document.getElementById('d-respuesta').value;
   entry.manana.intencion=document.getElementById('d-intencion').value;
   saveDayEntry(entry);showToast('✓ Día guardado');
 };
