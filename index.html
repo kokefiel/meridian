@@ -125,7 +125,8 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .entry .e-date{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--bitacora);margin-bottom:6px;}
 .entry .e-text{font-size:16px;line-height:1.55;white-space:pre-wrap;}
 .entry .e-mood{font-size:18px;margin-bottom:4px;}
-.bita-input{width:100%;border:none;background:transparent;font-size:17px;line-height:1.55;resize:none;color:var(--ink);outline:none;min-height:90px;}
+.bita-input{width:100%;border:1.5px solid var(--line-soft);border-radius:12px;background:var(--card);font-size:17px;line-height:1.55;resize:none;color:var(--ink);outline:none;min-height:112px;padding:12px 14px;margin:10px 0 12px;}
+.bita-input:focus{border-color:var(--bitacora);}
 .bita-input::placeholder{color:var(--ink-soft);}
 .mood-row{display:flex;gap:8px;margin:10px 0;}
 .mood-row button{font-size:24px;width:44px;height:44px;border-radius:12px;background:var(--bg-soft);display:flex;align-items:center;justify-content:center;opacity:.5;transition:all .15s;}
@@ -234,6 +235,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 
 /* save bar */
 .save-bar{position:sticky;bottom:16px;display:flex;justify-content:center;margin-top:16px;z-index:10;}
+.day-save-bar{margin-top:28px;}
 .save-btn{background:var(--dia);color:#fff;font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600;font-size:15px;padding:14px 48px;border-radius:40px;box-shadow:0 6px 20px rgba(176,74,122,.3);transition:transform .1s;}
 .save-btn:active{transform:scale(.97);}
 .saved-toast{position:fixed;top:calc(var(--safe-top) + 16px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;padding:10px 22px;border-radius:30px;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;}
@@ -480,7 +482,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
           <div class="add-at" style="margin-bottom:0"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="soc"></div>
         </div>
       </div>
-      <div class="save-bar"><button class="save-btn" id="saveDayBtn">Guardar día</button></div>
+      <div class="save-bar day-save-bar"><button class="save-btn" id="saveDayBtn">Guardar día</button></div>
     </div>
 
     <!-- CIERRE -->
@@ -547,7 +549,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="mood-row" id="moodRow">
         <button data-m="😞">😞</button><button data-m="😕">😕</button><button data-m="😐">😐</button><button data-m="🙂">🙂</button><button data-m="😄">😄</button>
       </div>
-      <textarea class="bita-input" id="bitaInput" placeholder="¿Cómo ha ido el día? Anota lo que quieras…"></textarea>
+      <textarea class="bita-input" id="bitaInput" placeholder="¿Cómo ha ido el día? Cómo te sientes, qué notaste hoy, qué te impidió hacer algo. Escribe libre, anota lo que quieras. Son tus apuntes."></textarea>
       <button class="btn-main" id="bitaSave" style="background:var(--bitacora);box-shadow:0 6px 18px rgba(106,108,196,.28);width:100%;margin-top:6px;">Guardar entrada</button>
     </div>
     <input class="search-box" id="bitaSearch" placeholder="🔍 Buscar en tus entradas…">
