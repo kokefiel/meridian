@@ -677,6 +677,8 @@ async function syncUp(){
   if(error){
     console.error('syncUp error:',error);
     showToast('⚠ Error sincronizando');
+  }else{
+    console.log('syncUp OK',new Date().toISOString(),Object.keys(appState));
   }
 }
 
@@ -697,6 +699,7 @@ function hideAuth(){
   document.getElementById('app').style.display='flex';
 }
 
+let _appInitialized=false;
 async function initAuth(){
   try{
     const{data:{session},error}=await supa.auth.getSession();
@@ -705,25 +708,41 @@ async function initAuth(){
       currentUser=session.user;
       document.getElementById('userEmail').textContent=currentUser.email;
       await syncDown();
+      reloadStateVars();
       hideAuth();
       initApp();
+      _appInitialized=true;
     }else{
       showAuth();
     }
     supa.auth.onAuthStateChange(async(event,session)=>{
-      if(event==='SIGNED_IN'&&session){
+      if(event==='SIGNED_IN'&&session&&!_appInitialized){
         currentUser=session.user;
         document.getElementById('userEmail').textContent=currentUser.email;
         await syncDown();
+        reloadStateVars();
         hideAuth();
         initApp();
+        _appInitialized=true;
       }
-      if(event==='SIGNED_OUT'){currentUser=null;showAuth();}
+      if(event==='SIGNED_OUT'){currentUser=null;_appInitialized=false;showAuth();}
     });
   }catch(e){
     console.error('initAuth error:',e);
     showAuth();
   }
+}
+
+/* Recargar variables de estado en memoria desde localStorage (tras syncDown) */
+function reloadStateVars(){
+  activeProyId=DB.get('activeProyId',null);
+  activeList=DB.get('activeList',0);
+  pomoCfg={...POMO_DEFAULTS,...DB.get('pomoCfg',{})};
+  if(!pomoCfg.focus||isNaN(pomoCfg.focus))pomoCfg.focus=25;
+  if(!pomoCfg.short||isNaN(pomoCfg.short))pomoCfg.short=5;
+  if(!pomoCfg.long||isNaN(pomoCfg.long))pomoCfg.long=15;
+  if(!pomoCfg.cycles||isNaN(pomoCfg.cycles))pomoCfg.cycles=4;
+  if(pomoCfg.sound===undefined)pomoCfg.sound=true;
 }
 
 /* ===== STORAGE ===== */
@@ -1817,10 +1836,11 @@ savePomoCfg=c=>{_origSavePomoCfg(c);syncLater();};
 
 /* Arrancar */
 // Sincronizar al salir o cambiar de pestaña/app
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}
+  if(document.visibilityState==='visible'&&currentUser){syncDown().then(()=>{reloadStateVars();renderPomoCfg();updatePomoUI();renderProyectos();const activeTab=document.querySelector('.tab.on');if(activeTab)go(activeTab.dataset.go);});}
+});
 window.addEventListener('beforeunload',()=>{if(currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
-// Sincronizar al volver a la app
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&currentUser){syncDown().then(()=>{renderPomoCfg();updatePomoUI();renderProyectos();const activeTab=document.querySelector('.tab.on');if(activeTab)go(activeTab.dataset.go);});}});
 initAuth();
 </script>
 </body>
