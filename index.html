@@ -625,10 +625,14 @@ async function syncDown(){
   if(!currentUser)return;
   const{data,error}=await supa.from('ritmo_data').select('*').eq('user_id',currentUser.id).single();
   if(error||!data)return;
-  const map={habits:'habits',lists:'lists',bita:'bita',dia_days:'diaDays',ruedas:'ruedas'};
+  const map={habits:'habits',lists:'lists',bita:'bita',ruedas:'ruedas'};
   Object.entries(map).forEach(([col,key])=>{if(data[col])DB.set(key,data[col]);});
+  // Mi día: mezclar servidor + local para no perder notas recientes si Supabase trae una copia antigua.
+  if(Array.isArray(data.dia_days)){
+    DB.set('diaDays',mergeDiaDays(DB.get('diaDays',[]),data.dia_days));
+  }
   // norte: solo sobreescribir si tiene datos válidos
-  if(data.norte&&data.norte.frases){
+  if(data.norte&&['frases','cualidades','noquiero','siquiero'].some(k=>(data.norte[k]||'').trim())){
     DB.set('norte',data.norte);
   }
   // pomoCfg: solo sobreescribir si tiene datos válidos
@@ -703,6 +707,68 @@ const DB={
 };
 const todayKey=()=>keyOf(new Date());
 function keyOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function cleanText(v){return typeof v==='string'?v:'';}
+function preferText(local,remote){return cleanText(local).trim()?cleanText(local):cleanText(remote);}
+function preferTasks(local,remote){
+  const l=Array.isArray(local)?local:[];
+  const r=Array.isArray(remote)?remote:[];
+  return l.length?l:r;
+}
+function normalizeDayEntry(d){
+  return {
+    key:d&&d.key?d.key:todayKey(),
+    updatedAt:d&&d.updatedAt?d.updatedAt:'',
+    manana:{
+      objetivo:cleanText(d&&d.manana&&d.manana.objetivo),
+      pregunta:cleanText(d&&d.manana&&d.manana.pregunta),
+      intencion:cleanText(d&&d.manana&&d.manana.intencion),
+      tasks:{
+        pro:preferTasks(d&&d.manana&&d.manana.tasks&&d.manana.tasks.pro,[]),
+        per:preferTasks(d&&d.manana&&d.manana.tasks&&d.manana.tasks.per,[]),
+        soc:preferTasks(d&&d.manana&&d.manana.tasks&&d.manana.tasks.soc,[])
+      }
+    },
+    cierre:{
+      funciono:cleanText(d&&d.cierre&&d.cierre.funciono),
+      fallo:cleanText(d&&d.cierre&&d.cierre.fallo),
+      norepito:cleanText(d&&d.cierre&&d.cierre.norepito)
+    }
+  };
+}
+function mergeDayEntry(local,remote){
+  const l=normalizeDayEntry(local),r=normalizeDayEntry(remote);
+  const lt=Date.parse(l.updatedAt||0),rt=Date.parse(r.updatedAt||0);
+  if(lt&&rt&&rt>lt)return r;
+  if(lt&&rt&&lt>=rt)return l;
+  return {
+    key:l.key||r.key,
+    updatedAt:l.updatedAt||r.updatedAt,
+    manana:{
+      objetivo:preferText(l.manana.objetivo,r.manana.objetivo),
+      pregunta:preferText(l.manana.pregunta,r.manana.pregunta),
+      intencion:preferText(l.manana.intencion,r.manana.intencion),
+      tasks:{
+        pro:preferTasks(l.manana.tasks.pro,r.manana.tasks.pro),
+        per:preferTasks(l.manana.tasks.per,r.manana.tasks.per),
+        soc:preferTasks(l.manana.tasks.soc,r.manana.tasks.soc)
+      }
+    },
+    cierre:{
+      funciono:preferText(l.cierre.funciono,r.cierre.funciono),
+      fallo:preferText(l.cierre.fallo,r.cierre.fallo),
+      norepito:preferText(l.cierre.norepito,r.cierre.norepito)
+    }
+  };
+}
+function mergeDiaDays(localDays,remoteDays){
+  const byKey=new Map();
+  (Array.isArray(remoteDays)?remoteDays:[]).forEach(d=>{if(d&&d.key)byKey.set(d.key,normalizeDayEntry(d));});
+  (Array.isArray(localDays)?localDays:[]).forEach(d=>{
+    if(!d||!d.key)return;
+    byKey.set(d.key,byKey.has(d.key)?mergeDayEntry(d,byKey.get(d.key)):normalizeDayEntry(d));
+  });
+  return [...byKey.values()].sort((a,b)=>b.key.localeCompare(a.key)).slice(0,7);
+}
 const fmtDate=(d=new Date())=>d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
 function showToast(msg='✓ Guardado'){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
 
@@ -1087,6 +1153,7 @@ function saveDiaDays(arr){
 }
 function getDayEntry(key){return getDiaDays().find(d=>d.key===key)||{key,manana:{objetivo:'',pregunta:'',intencion:'',tasks:{pro:[],per:[],soc:[]}},cierre:{funciono:'',fallo:'',norepito:''}};}
 function saveDayEntry(entry){
+  entry=normalizeDayEntry({...entry,updatedAt:new Date().toISOString()});
   const days=getDiaDays().filter(d=>d.key!==entry.key);
   days.push(entry);saveDiaDays(days);
 }
