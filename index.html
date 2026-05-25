@@ -636,6 +636,7 @@ async function syncDown(){
   }
   if(data.app_state&&Object.keys(data.app_state).length){
     applyAppState(data.app_state);
+    _lastSyncedAt=data.app_state.updatedAt||null;
     return;
   }
   const map={habits:'habits',lists:'lists',bita:'bita',ruedas:'ruedas'};
@@ -678,7 +679,8 @@ async function syncUp(){
     console.error('syncUp error:',error);
     showToast('⚠ Error sincronizando');
   }else{
-    console.log('syncUp OK',new Date().toISOString(),Object.keys(appState));
+    _lastSyncedAt=appState.updatedAt;
+    console.log('syncUp OK',appState.updatedAt);
   }
 }
 
@@ -700,6 +702,10 @@ function hideAuth(){
 }
 
 let _appInitialized=false;
+let _realtimeChannel=null;
+let _pollTimer=null;
+let _lastSyncedAt=null; // timestamp del último app_state recibido
+
 async function initAuth(){
   try{
     const{data:{session},error}=await supa.auth.getSession();
@@ -712,6 +718,7 @@ async function initAuth(){
       hideAuth();
       initApp();
       _appInitialized=true;
+      startRealtimeSync();
     }else{
       showAuth();
     }
@@ -724,13 +731,76 @@ async function initAuth(){
         hideAuth();
         initApp();
         _appInitialized=true;
+        startRealtimeSync();
       }
-      if(event==='SIGNED_OUT'){currentUser=null;_appInitialized=false;showAuth();}
+      if(event==='SIGNED_OUT'){currentUser=null;_appInitialized=false;stopRealtimeSync();showAuth();}
     });
   }catch(e){
     console.error('initAuth error:',e);
     showAuth();
   }
+}
+
+/* Realtime: escuchar cambios de otros dispositivos */
+function startRealtimeSync(){
+  stopRealtimeSync();
+  if(!currentUser)return;
+  // Suscripción Realtime a cambios en la fila del usuario
+  try{
+    _realtimeChannel=supa.channel('sync-'+currentUser.id)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'ritmo_data',filter:'user_id=eq.'+currentUser.id},payload=>{
+        console.log('Realtime UPDATE recibido');
+        const remote=payload.new;
+        if(remote&&remote.app_state&&remote.app_state.updatedAt){
+          // Solo aplicar si es más reciente que lo que tenemos
+          if(!_lastSyncedAt||remote.app_state.updatedAt>_lastSyncedAt){
+            applyAppState(remote.app_state);
+            _lastSyncedAt=remote.app_state.updatedAt;
+            reloadStateVars();
+            refreshUI();
+          }
+        }
+      })
+      .subscribe((status)=>{
+        console.log('Realtime status:',status);
+        // Si realtime falla, activar polling de respaldo
+        if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+          startPolling();
+        }
+      });
+  }catch(e){
+    console.warn('Realtime no disponible, usando polling:',e);
+    startPolling();
+  }
+  // Polling de respaldo cada 30s por si realtime no funciona
+  startPolling();
+}
+function stopRealtimeSync(){
+  if(_realtimeChannel){try{supa.removeChannel(_realtimeChannel);}catch(e){}}_realtimeChannel=null;
+  if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}
+}
+function startPolling(){
+  if(_pollTimer)return;
+  _pollTimer=setInterval(async()=>{
+    if(!currentUser||document.visibilityState==='hidden')return;
+    try{
+      const{data,error}=await supa.from('ritmo_data').select('app_state').eq('user_id',currentUser.id).single();
+      if(!error&&data&&data.app_state&&data.app_state.updatedAt){
+        if(!_lastSyncedAt||data.app_state.updatedAt>_lastSyncedAt){
+          applyAppState(data.app_state);
+          _lastSyncedAt=data.app_state.updatedAt;
+          reloadStateVars();
+          refreshUI();
+          console.log('Poll: datos actualizados',data.app_state.updatedAt);
+        }
+      }
+    }catch(e){console.warn('Poll error:',e);}
+  },30000);
+}
+function refreshUI(){
+  renderPomoCfg();updatePomoUI();renderProyectos();
+  const activeTab=document.querySelector('.tab.on');
+  if(activeTab)go(activeTab.dataset.go);
 }
 
 /* Recargar variables de estado en memoria desde localStorage (tras syncDown) */
@@ -1837,8 +1907,14 @@ savePomoCfg=c=>{_origSavePomoCfg(c);syncLater();};
 /* Arrancar */
 // Sincronizar al salir o cambiar de pestaña/app
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden'&&currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}
-  if(document.visibilityState==='visible'&&currentUser){syncDown().then(()=>{reloadStateVars();renderPomoCfg();updatePomoUI();renderProyectos();const activeTab=document.querySelector('.tab.on');if(activeTab)go(activeTab.dataset.go);});}
+  if(document.visibilityState==='hidden'&&currentUser){
+    if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}
+    syncUp();
+  }
+  if(document.visibilityState==='visible'&&currentUser){
+    // Al volver, forzar descarga inmediata por si hay cambios
+    syncDown().then(()=>{reloadStateVars();refreshUI();});
+  }
 });
 window.addEventListener('beforeunload',()=>{if(currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
 initAuth();
