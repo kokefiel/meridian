@@ -652,6 +652,10 @@ async function syncDown(){
   if(data.pomo_cfg&&data.pomo_cfg.focus){
     DB.set('pomoCfg',{...POMO_DEFAULTS,...data.pomo_cfg});
   }
+  // campos que solo existen en app_state — intentar cargar si vienen sueltos en data
+  ['proyectos','activeProyId','pomoStats','pomoLogs','activeList'].forEach(k=>{
+    if(data[k]!==undefined&&data[k]!==null)DB.set(k,data[k]);
+  });
 }
 
 // Sube todos los datos locales a Supabase
@@ -676,8 +680,12 @@ async function syncUp(){
   }
 }
 
-// Versión de save que también sube a Supabase (sin bloquear UI)
-function syncLater(){setTimeout(()=>syncUp(),300);}
+// Versión de save que también sube a Supabase (con debounce para evitar ráfagas)
+let _syncTimer=null;
+function syncLater(){
+  if(_syncTimer)clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>{_syncTimer=null;syncUp();},800);
+}
 
 /* ===== AUTH UI ===== */
 function showAuth(){
@@ -901,10 +909,10 @@ document.querySelectorAll('.stepper button[data-k]').forEach(b=>b.onclick=()=>{
   const k=b.dataset.k,d=parseInt(b.dataset.d);
   const mins={focus:5,short:1,long:5};
   pomoCfg[k]=Math.max(k==='cycles'?1:1,pomoCfg[k]+(mins[k]||1)*d);
-  DB.set('pomoCfg',pomoCfg);renderPomoCfg();
+  savePomoCfg(pomoCfg);renderPomoCfg();
   if(!pomoState.running)resetPomo();
 });
-document.getElementById('soundToggle').onclick=()=>{pomoCfg.sound=!pomoCfg.sound;DB.set('pomoCfg',pomoCfg);renderPomoCfg();};
+document.getElementById('soundToggle').onclick=()=>{pomoCfg.sound=!pomoCfg.sound;savePomoCfg(pomoCfg);renderPomoCfg();};
 function fmtTime(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function updatePomoUI(){
   document.getElementById('pomoTime').textContent=fmtTime(pomoState.remaining);
@@ -1049,6 +1057,8 @@ function renderPomoStats(){
 
 function getPomoLogs(){return DB.get('pomoLogs',[]);}
 function savePomoLogs(logs){DB.set('pomoLogs',logs);}
+function savePomoStats(stats){DB.set('pomoStats',stats);}
+function savePomoCfg(cfg){DB.set('pomoCfg',cfg);}
 function registrarFoco(mins,completed){
   const tk=todayKey();
   const stats=DB.get('pomoStats',{});
@@ -1062,7 +1072,7 @@ function registrarFoco(mins,completed){
     const p=proyectos.find(x=>x.id===activeProyId);
     if(p){p.sesiones=(p.sesiones||0)+(completed?1:0);p.minutos=(p.minutos||0)+mins;saveProyectos(proyectos);}
   }
-  DB.set('pomoStats',stats);
+  savePomoStats(stats);
   const logs=getPomoLogs();
   logs.unshift({id:'pl'+Date.now(),date:new Date().toISOString(),day:tk,projectId:activeProyId||null,mins,completed});
   savePomoLogs(logs.slice(0,80));
@@ -1646,6 +1656,7 @@ document.getElementById('saveRuedaBtn').addEventListener('click',function(){
 /* ===== BITÁCORA ===== */
 const PROMPTS=['¿Qué ha ido bien hoy?','¿Qué mejorarías de hoy?','¿Por qué estás agradecido?','¿Cómo está tu energía?','¿Qué has aprendido?','¿Qué te ha costado?'];
 let bitaMood='';
+function saveBita(entries){DB.set('bita',entries);}
 function renderBita(){
   document.getElementById('bitaDate').textContent=fmtDate().toUpperCase();
   const chips=document.getElementById('promptChips');chips.innerHTML='';
@@ -1665,7 +1676,7 @@ document.getElementById('bitaSave').onclick=()=>{
   if(!text){showToast('✍️ Escribe algo primero');return;}
   const entries=DB.get('bita',[]);
   entries.unshift({id:Date.now(),date:new Date().toISOString(),mood:bitaMood,text});
-  DB.set('bita',entries);
+  saveBita(entries);
   document.getElementById('bitaInput').value='';bitaMood='';
   document.querySelectorAll('#moodRow button').forEach(x=>x.classList.remove('sel'));
   renderBitaList();showToast();
@@ -1683,7 +1694,7 @@ function renderBitaList(){
     el.innerHTML=`<div class="e-date">${d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
       ${e.mood?`<div class="e-mood">${e.mood}</div>`:''}
       <div class="e-text">${esc(e.text)}</div>`;
-    el.onclick=()=>{appConfirm('¿Eliminar esta entrada?',()=>{const all=DB.get('bita',[]).filter(x=>x.id!==e.id);DB.set('bita',all);renderBitaList();});};
+    el.onclick=()=>{appConfirm('¿Eliminar esta entrada?',()=>{const all=DB.get('bita',[]).filter(x=>x.id!==e.id);saveBita(all);renderBitaList();});};
     list.appendChild(el);
   });
 }
@@ -1797,8 +1808,19 @@ const _origSaveNorte=saveNorte;
 saveNorte=n=>{_origSaveNorte(n);syncLater();};
 const _origSavePomoLogs=savePomoLogs;
 savePomoLogs=l=>{_origSavePomoLogs(l);syncLater();};
+const _origSaveBita=saveBita;
+saveBita=b=>{_origSaveBita(b);syncLater();};
+const _origSavePomoStats=savePomoStats;
+savePomoStats=s=>{_origSavePomoStats(s);syncLater();};
+const _origSavePomoCfg=savePomoCfg;
+savePomoCfg=c=>{_origSavePomoCfg(c);syncLater();};
 
 /* Arrancar */
+// Sincronizar al salir o cambiar de pestaña/app
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
+window.addEventListener('beforeunload',()=>{if(currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
+// Sincronizar al volver a la app
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&currentUser){syncDown().then(()=>{renderPomoCfg();updatePomoUI();renderProyectos();const activeTab=document.querySelector('.tab.on');if(activeTab)go(activeTab.dataset.go);});}});
 initAuth();
 </script>
 </body>
