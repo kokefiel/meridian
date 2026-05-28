@@ -1002,7 +1002,15 @@ if(!pomoCfg.short||isNaN(pomoCfg.short))pomoCfg.short=5;
 if(!pomoCfg.long||isNaN(pomoCfg.long))pomoCfg.long=15;
 if(!pomoCfg.cycles||isNaN(pomoCfg.cycles))pomoCfg.cycles=4;
 if(pomoCfg.sound===undefined)pomoCfg.sound=true;
-let pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null};
+let pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null,endTime:null};
+
+/* ── Timer basado en timestamp real (no en setInterval) ──
+   En vez de restar 1 cada segundo, guardamos la hora exacta en que
+   termina la fase (endTime). Cada tick calcula cuánto queda comparando
+   con Date.now(). Así, aunque iOS/Android congelen JS al bloquear
+   pantalla, al volver se recalcula al instante y se detecta si la
+   fase ya terminó mientras estabas fuera. */
+
 function renderPomoCfg(){
   ['focus','short','long','cycles'].forEach(k=>document.getElementById('v-'+k).textContent=pomoCfg[k]);
   const sb=document.getElementById('soundToggle');
@@ -1033,29 +1041,65 @@ function updatePomoUI(){
   saveBtn.disabled=elapsed<1;
   saveBtn.textContent=elapsed>=1?'Guardar '+elapsed+' min':'Guardar tramo';
 }
-function tick(){if(pomoState.remaining>0){pomoState.remaining--;updatePomoUI();}else phaseEnd();}
+
+/* tick basado en reloj real */
+function tick(){
+  if(!pomoState.running||!pomoState.endTime)return;
+  const now=Date.now();
+  const left=Math.round((pomoState.endTime-now)/1000);
+  if(left<=0){
+    pomoState.remaining=0;
+    updatePomoUI();
+    phaseEnd();
+  }else{
+    pomoState.remaining=left;
+    updatePomoUI();
+  }
+}
+
+function startTimer(){
+  stopTimer();
+  /* endTime = momento exacto en que termina esta fase */
+  pomoState.endTime=Date.now()+pomoState.remaining*1000;
+  pomoState.running=true;
+  /* Intervalo rápido (250ms) para UI fluida; el cálculo real
+     depende de Date.now(), no de la frecuencia del intervalo */
+  pomoState.timer=setInterval(tick,250);
+}
+function stopTimer(){
+  if(pomoState.timer){clearInterval(pomoState.timer);pomoState.timer=null;}
+  /* Al pausar, congelar remaining según reloj real */
+  if(pomoState.endTime&&pomoState.running){
+    pomoState.remaining=Math.max(0,Math.round((pomoState.endTime-Date.now())/1000));
+  }
+  pomoState.running=false;
+  pomoState.endTime=null;
+}
+
 function phaseEnd(){
-  clearInterval(pomoState.timer);pomoState.running=false;beep();notify();
+  stopTimer();beep();notify();
   if(pomoState.phase==='focus'){
-    registrarPomodoro(); // registra el pomodoro completado
+    registrarPomodoro();
     if(pomoState.cycle>=pomoCfg.cycles){pomoState.phase='long';pomoState.cycle=1;}
     else{pomoState.phase='short';pomoState.cycle++;}
   }else{pomoState.phase='focus';}
   const dur={focus:pomoCfg.focus,short:pomoCfg.short,long:pomoCfg.long}[pomoState.phase];
-  pomoState.total=dur*60;pomoState.remaining=dur*60;updatePomoUI();
+  pomoState.total=dur*60;pomoState.remaining=dur*60;pomoState.endTime=null;updatePomoUI();
 }
+
 document.getElementById('pomoStart').onclick=()=>{
-  if(pomoState.running){clearInterval(pomoState.timer);pomoState.running=false;}
-  else{pomoState.running=true;pomoState.timer=setInterval(tick,1000);unlockAudio();}
+  if(pomoState.running){stopTimer();}
+  else{startTimer();unlockAudio();}
   updatePomoUI();
 };
-function resetPomo(){clearInterval(pomoState.timer);pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null};updatePomoUI();}
+function resetPomo(){stopTimer();pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null,endTime:null};updatePomoUI();}
 document.getElementById('pomoReset').onclick=resetPomo;
+
 document.getElementById('pomoSavePartial').onclick=()=>{
   if(pomoState.phase!=='focus')return;
   const mins=Math.floor((pomoState.total-pomoState.remaining)/60);
   if(mins<1)return;
-  clearInterval(pomoState.timer);
+  stopTimer();
   registrarFoco(mins,false);
   resetPomo();
   showToast('✓ Tramo guardado');
@@ -1932,9 +1976,20 @@ document.addEventListener('visibilitychange',()=>{
     if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}
     syncUp();
   }
-  if(document.visibilityState==='visible'&&currentUser){
-    // Al volver, forzar descarga inmediata por si hay cambios
-    syncDown().then(()=>{reloadStateVars();refreshUI();});
+  if(document.visibilityState==='visible'){
+    /* Compensar pomodoro PRIMERO (antes de sync, que tarda) */
+    if(pomoState.running&&pomoState.endTime)tick();
+    if(currentUser){
+      syncDown().then(()=>{
+        reloadStateVars();
+        /* refreshUI sobreescribiría el timer, así que solo
+           refrescamos lo que NO sea el pomodoro en marcha */
+        renderProyectos();
+        const activeTab=document.querySelector('.tab.on');
+        if(activeTab&&activeTab.dataset.go!=='pomodoro')go(activeTab.dataset.go);
+        else{renderPomoCfg();updatePomoUI();}
+      });
+    }
   }
 });
 window.addEventListener('beforeunload',()=>{if(currentUser){if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;}syncUp();}});
