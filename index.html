@@ -147,7 +147,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .task .t-text{flex:1;font-size:17px;}
 .task.done .t-text{color:var(--ink-soft);text-decoration:line-through;}
 .task .del{color:var(--ink-soft);opacity:.3;padding:4px;}
-.add-task{display:flex;align-items:center;gap:13px;padding:13px 4px;}
+.add-task{display:flex;align-items:center;gap:13px;padding:11px 12px;border:1.5px solid var(--line-soft);border-radius:12px;background:var(--card);margin:4px 0 10px;}
 .add-task .plus{width:24px;height:24px;color:var(--tasks);font-size:22px;display:flex;align-items:center;justify-content:center;}
 .add-task input{flex:1;border:none;background:transparent;font-size:17px;outline:none;color:var(--ink);}
 .add-task input::placeholder{color:var(--ink-soft);}
@@ -402,6 +402,8 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="settings-row"><div class="name">Tiempo de foco</div><div style="font-size:22px;font-weight:600;color:var(--pomo-active)" id="statFocus">0 min</div></div>
       <div class="settings-row" style="border-bottom:none"><div class="name">Proyecto principal</div><div style="font-size:15px;font-weight:600;color:var(--ink-soft);text-align:right;max-width:160px;" id="statMainProj">—</div></div>
     </div>
+    <div class="sec-title">Historial de hoy</div>
+    <div id="pomoLogList"></div>
     <!-- proyectos -->
     <div class="sec-title">Proyectos</div>
     <div id="proyectosList"></div>
@@ -807,6 +809,7 @@ function refreshUI(){
 function reloadStateVars(){
   activeProyId=DB.get('activeProyId',null);
   activeList=DB.get('activeList',0);
+  activeDayKey=todayKey();
   pomoCfg={...POMO_DEFAULTS,...DB.get('pomoCfg',{})};
   if(!pomoCfg.focus||isNaN(pomoCfg.focus))pomoCfg.focus=25;
   if(!pomoCfg.short||isNaN(pomoCfg.short))pomoCfg.short=5;
@@ -897,26 +900,39 @@ function normalizeDayEntry(d){
 function mergeDayEntry(local,remote){
   const l=normalizeDayEntry(local),r=normalizeDayEntry(remote);
   const lt=Date.parse(l.updatedAt||0),rt=Date.parse(r.updatedAt||0);
-  if(lt&&rt&&rt>lt)return r;
-  if(lt&&rt&&lt>=rt)return l;
+  // Siempre hacer merge campo a campo para no perder datos
+  // El más reciente gana solo cuando AMBOS tienen contenido en un campo
+  const pick=(lv,rv)=>{
+    const lhas=cleanText(lv).trim(),rhas=cleanText(rv).trim();
+    if(lhas&&!rhas)return lv;
+    if(rhas&&!lhas)return rv;
+    // ambos tienen contenido: el más reciente gana
+    return (rt>lt)?rv:lv;
+  };
+  const pickT=(la,ra)=>{
+    const lhas=Array.isArray(la)&&la.length,rhas=Array.isArray(ra)&&ra.length;
+    if(lhas&&!rhas)return la;
+    if(rhas&&!lhas)return ra;
+    return (rt>lt)?ra:la;
+  };
   return {
     key:l.key||r.key,
-    updatedAt:l.updatedAt||r.updatedAt,
+    updatedAt:(rt>lt)?r.updatedAt:l.updatedAt,
     manana:{
-      objetivo:preferText(l.manana.objetivo,r.manana.objetivo),
-      pregunta:preferText(l.manana.pregunta,r.manana.pregunta),
-      respuesta:preferText(l.manana.respuesta,r.manana.respuesta),
-      intencion:preferText(l.manana.intencion,r.manana.intencion),
+      objetivo:pick(l.manana.objetivo,r.manana.objetivo),
+      pregunta:pick(l.manana.pregunta,r.manana.pregunta),
+      respuesta:pick(l.manana.respuesta,r.manana.respuesta),
+      intencion:pick(l.manana.intencion,r.manana.intencion),
       tasks:{
-        pro:preferTasks(l.manana.tasks.pro,r.manana.tasks.pro),
-        per:preferTasks(l.manana.tasks.per,r.manana.tasks.per),
-        soc:preferTasks(l.manana.tasks.soc,r.manana.tasks.soc)
+        pro:pickT(l.manana.tasks.pro,r.manana.tasks.pro),
+        per:pickT(l.manana.tasks.per,r.manana.tasks.per),
+        soc:pickT(l.manana.tasks.soc,r.manana.tasks.soc)
       }
     },
     cierre:{
-      funciono:preferText(l.cierre.funciono,r.cierre.funciono),
-      fallo:preferText(l.cierre.fallo,r.cierre.fallo),
-      norepito:preferText(l.cierre.norepito,r.cierre.norepito)
+      funciono:pick(l.cierre.funciono,r.cierre.funciono),
+      fallo:pick(l.cierre.fallo,r.cierre.fallo),
+      norepito:pick(l.cierre.norepito,r.cierre.norepito)
     }
   };
 }
@@ -1027,7 +1043,6 @@ function phaseEnd(){
   }else{pomoState.phase='focus';}
   const dur={focus:pomoCfg.focus,short:pomoCfg.short,long:pomoCfg.long}[pomoState.phase];
   pomoState.total=dur*60;pomoState.remaining=dur*60;updatePomoUI();
-  setTimeout(()=>document.getElementById('pomoStart').click(),900);
 }
 document.getElementById('pomoStart').onclick=()=>{
   if(pomoState.running){clearInterval(pomoState.timer);pomoState.running=false;}
@@ -1310,7 +1325,7 @@ let activeDayKey=todayKey();
 function getDiaDays(){return DB.get('diaDays',[]);}
 function saveDiaDays(arr){
   // conservar hasta 7 entradas (1 futuro + hoy + 5 pasados)
-  const sorted=arr.sort((a,b)=>b.key.localeCompare(a.key)).slice(0,7);
+  const sorted=[...arr].sort((a,b)=>b.key.localeCompare(a.key)).slice(0,7);
   DB.set('diaDays',sorted);
 }
 function getDayEntry(key){return getDiaDays().find(d=>d.key===key)||{key,manana:{objetivo:'',pregunta:'',respuesta:'',intencion:'',tasks:{pro:[],per:[],soc:[]}},cierre:{funciono:'',fallo:'',norepito:''}};}
@@ -1346,7 +1361,12 @@ function autoSaveDraft(){
       entry.cierre.norepito=document.getElementById('d-norepito').value;
     }
   }
-  saveDayEntry(entry);
+  // solo guardar si hay contenido real (evitar entradas fantasma)
+  const m=entry.manana,c=entry.cierre;
+  const hasTasks=m.tasks&&(m.tasks.pro.length||m.tasks.per.length||m.tasks.soc.length);
+  const hasContent=(m.objetivo||'').trim()||(m.pregunta||'').trim()||(m.respuesta||'').trim()||(m.intencion||'').trim()||
+    (c.funciono||'').trim()||(c.fallo||'').trim()||(c.norepito||'').trim()||hasTasks;
+  if(hasContent)saveDayEntry(entry);
 }
 
 document.querySelectorAll('.dia-tab').forEach(t=>t.onclick=()=>{
@@ -1379,6 +1399,7 @@ function buildDaySel(){
 }
 
 function renderDia(){
+  activeDayKey=todayKey();
   document.getElementById('diaHeadDate').textContent=fmtDate().toUpperCase();
   buildDaySel();
   renderDiaContent();
