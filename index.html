@@ -2,15 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f4efe6">
+<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2b2823" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" href="icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Meridian</title>
+<meta name="description" content="Meridian — tu app de productividad: pomodoro, hábitos, bitácora y tareas.">
 <style>
 :root{
   --bg:#f4efe6;
@@ -336,9 +338,9 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
   <h1 style="font-size:32px;font-weight:600;margin:0 0 6px;letter-spacing:-.5px;">Meridian</h1>
   <p style="color:var(--ink-soft);font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;margin:0 0 32px;text-align:center;">Tu vida, con dirección</p>
   <div style="width:100%;max-width:360px;">
-    <input id="authEmail" type="email" placeholder="Tu email" autocomplete="email"
+    <input id="authEmail" aria-label="Tu email" type="email" placeholder="Tu email" autocomplete="email"
       style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none;margin-bottom:10px;background:var(--card);font-family:inherit;">
-    <input id="authPass" type="password" placeholder="Contraseña" autocomplete="current-password"
+    <input id="authPass" aria-label="Contraseña" type="password" placeholder="Contraseña" autocomplete="current-password"
       style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none;margin-bottom:14px;background:var(--card);font-family:inherit;">
     <button id="authLoginBtn" style="width:100%;padding:15px;border-radius:14px;background:var(--dia);color:#fff;font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600;font-size:16px;margin-bottom:10px;box-shadow:0 6px 18px rgba(176,74,122,.28);">Entrar</button>
     <button id="authRegisterBtn" style="width:100%;padding:15px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;">Crear cuenta nueva</button>
@@ -357,7 +359,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
     <div class="head"><h1>Pomodoro</h1><div class="date"><span class="dot"></span><span id="pomo-status">Listo</span></div></div>
     <div class="timer-wrap">
       <div class="ring" id="ring">
-        <svg width="240" height="240" viewBox="0 0 240 240">
+        <svg aria-hidden="true" width="240" height="240" viewBox="0 0 240 240">
           <circle class="bg-ring" cx="120" cy="120" r="108" fill="none" stroke-width="10"/>
           <circle class="fg-ring" id="ringFg" cx="120" cy="120" r="108" fill="none" stroke-width="10" stroke-dasharray="678.6" stroke-dashoffset="0"/>
         </svg>
@@ -409,7 +411,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
     <div id="proyectosList"></div>
     <button class="add-btn" id="addProyectoBtn">+ Nuevo proyecto</button>
     <div class="card project-form" id="projectForm">
-      <input class="project-name-input" id="projectNameInput" placeholder="Nombre del proyecto" autocomplete="off">
+      <input class="project-name-input" id="projectNameInput" aria-label="Nombre del proyecto" placeholder="Nombre del proyecto" autocomplete="off">
       <div class="color-palette" id="projectColorPalette"></div>
       <div class="project-form-actions">
         <button class="btn-ghost" id="cancelProyectoBtn" type="button">Cancelar</button>
@@ -420,7 +422,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 
   <!-- ===== HÁBITOS ===== -->
   <section class="screen" id="s-habitos">
-    <div class="head"><h1>Hábitos</h1><div class="date" id="habitDate">—</div></div>
+    <div class="head"><h2 class="screen-title">Hábitos</h2><div class="date" id="habitDate">—</div></div>
     <div class="habit-day-tabs">
       <button class="habit-day-tab on" data-habit-offset="0">Hoy</button>
       <button class="habit-day-tab" data-habit-offset="1">Ayer</button>
@@ -436,7 +438,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 
   <!-- ===== DÍA ===== -->
   <section class="screen" id="s-dia">
-    <div class="head"><h1>Mi día</h1><div class="date" id="diaHeadDate">—</div></div>
+    <div class="head"><h2 class="screen-title">Mi día</h2><div class="date" id="diaHeadDate">—</div></div>
 
     <!-- subtabs: Mañana / Cierre / Norte / Rueda -->
     <div class="dia-tabs">
@@ -458,7 +460,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
         </div>
         <div class="dia-field">
           <label>Mi pregunta de hoy</label>
-          <input id="d-pregunta" placeholder="La pregunta que me hago hoy…">
+          <input id="d-pregunta" aria-label="Pregunta del día" placeholder="La pregunta que me hago hoy…">
         </div>
         <div class="dia-field" style="margin-bottom:0">
           <label>Respuesta a mi pregunta</label>
@@ -477,17 +479,17 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
         <div class="aspect-block" id="asp-pro">
           <div class="aspect-header asp-pro"><div class="aspect-dot pro"></div><div class="aspect-title">Profesional</div></div>
           <div class="aspect-tasks" id="at-pro"></div>
-          <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="pro"></div>
+          <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="pro" aria-label="Añadir tarea profesional"></div>
         </div>
         <div class="aspect-block" id="asp-per" style="margin-top:6px;">
           <div class="aspect-header asp-per"><div class="aspect-dot per"></div><div class="aspect-title">Personal</div></div>
           <div class="aspect-tasks" id="at-per"></div>
-          <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="per"></div>
+          <div class="add-at"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="per" aria-label="Añadir tarea personal"></div>
         </div>
         <div class="aspect-block" id="asp-soc" style="margin-top:6px;margin-bottom:0;">
           <div class="aspect-header asp-soc"><div class="aspect-dot soc"></div><div class="aspect-title">Social</div></div>
           <div class="aspect-tasks" id="at-soc"></div>
-          <div class="add-at" style="margin-bottom:0"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="soc"></div>
+          <div class="add-at" style="margin-bottom:0"><div class="add-at-plus">+</div><input placeholder="Añadir tarea…" data-asp="soc" aria-label="Añadir tarea social"></div>
         </div>
       </div>
       <div class="save-bar day-save-bar"><button class="save-btn" id="saveDayBtn">Guardar día</button></div>
@@ -531,7 +533,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
         <div class="card">
           <div class="dia-field" style="margin-bottom:0">
             <label>Título de la revisión</label>
-            <input id="rueda-title" placeholder="Ej. Revisión semanal">
+            <input id="rueda-title" aria-label="Título de la rueda" placeholder="Ej. Revisión semanal">
           </div>
         </div>
         <div class="card" id="ruedaAreasCard"></div>
@@ -551,7 +553,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 
   <!-- ===== BITÁCORA ===== -->
   <section class="screen" id="s-bitacora">
-    <div class="head"><h1>Bitácora</h1><div class="date" id="bitaDate">—</div></div>
+    <div class="head"><h2 class="screen-title">Bitácora</h2><div class="date" id="bitaDate">—</div></div>
     <div class="card">
       <div id="promptChips"></div>
       <div class="mood-row" id="moodRow">
@@ -560,38 +562,38 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <textarea class="bita-input" id="bitaInput" placeholder="¿Cómo ha ido el día? Cómo te sientes, qué notaste hoy, qué te impidió hacer algo. Escribe libre, anota lo que quieras. Son tus apuntes."></textarea>
       <button class="btn-main" id="bitaSave" style="background:var(--bitacora);box-shadow:0 6px 18px rgba(106,108,196,.28);width:100%;margin-top:6px;">Guardar entrada</button>
     </div>
-    <input class="search-box" id="bitaSearch" placeholder="🔍 Buscar en tus entradas…">
+    <input class="search-box" id="bitaSearch" aria-label="Buscar en tus entradas" placeholder="🔍 Buscar en tus entradas…">
     <div class="sec-title">Historial</div>
     <div id="bitaList"></div>
   </section>
 
   <!-- ===== TASKS ===== -->
   <section class="screen" id="s-tasks">
-    <div class="head"><h1>Tareas</h1><div class="date" id="taskCount">—</div></div>
+    <div class="head"><h2 class="screen-title">Tareas</h2><div class="date" id="taskCount">—</div></div>
     <div class="list-tabs" id="listTabs"></div>
     <div id="taskList"></div>
   </section>
 
   <!-- NAV -->
-  <nav>
-    <button class="tab on" data-acc="pomodoro" data-go="pomodoro">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6M12 5V2"/></svg>
+  <nav aria-label="Navegación principal">
+    <button class="tab on" data-acc="pomodoro" data-go="pomodoro" aria-label="Pomodoro" aria-current="page">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6M12 5V2"/></svg>
       <span>Pomodoro</span>
     </button>
-    <button class="tab" data-acc="habitos" data-go="habitos">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <button class="tab" data-acc="habitos" data-go="habitos" aria-label="Hábitos">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span>Hábitos</span>
     </button>
-    <button class="tab" data-acc="dia" data-go="dia">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    <button class="tab" data-acc="dia" data-go="dia" aria-label="Mi día">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <span>Mi día</span>
     </button>
-    <button class="tab" data-acc="bitacora" data-go="bitacora">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>
+    <button class="tab" data-acc="bitacora" data-go="bitacora" aria-label="Bitácora">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>
       <span>Bitácora</span>
     </button>
-    <button class="tab" data-acc="tasks" data-go="tasks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    <button class="tab" data-acc="tasks" data-go="tasks" aria-label="Tareas">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
       <span>Tareas</span>
     </button>
   </nav>
@@ -600,7 +602,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h3 id="modalTitle">Nuevo</h3>
-    <input id="modalInput" placeholder="Escribe…" autocomplete="off">
+    <input id="modalInput" aria-label="Campo de entrada" placeholder="Escribe…" autocomplete="off">
     <div class="m-actions">
       <button class="m-cancel" id="modalCancel">Cancelar</button>
       <button class="m-ok" id="modalOk">Guardar</button>
@@ -1329,7 +1331,7 @@ function renderHabits(){
     const isDone=h.log&&h.log.includes(tk);if(isDone)done++;
     const streak=calcStreak(h);
     const el=document.createElement('div');el.className='habit'+(isDone?' done':'');
-    el.innerHTML=`<div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
+    el.innerHTML=`<div class="check"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
       <div class="info"><div class="h-name">${esc(h.name)}</div><div class="streak">🔥 ${streak} día${streak===1?'':'s'} seguidos</div></div>
       <button class="del" type="button">✕</button>`;
     el.querySelector('.check').addEventListener('click',function(e){e.stopPropagation();toggleHabit(i);});
@@ -1496,7 +1498,7 @@ function renderAspectTasks(entry,editable){
     const tasks=(entry.manana.tasks&&entry.manana.tasks[asp])||[];
     tasks.forEach((t,i)=>{
       const el=document.createElement('div');el.className='aspect-task-item';
-      el.innerHTML=`<div class="at-check${t.done?' done-c':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
+      el.innerHTML=`<div class="at-check${t.done?' done-c':''}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
         <div class="at-text${t.done?' done-t':''}">${esc(t.text)}</div>
         ${editable?`<button class="at-del">✕</button>`:''}`;
       if(editable){
@@ -1676,7 +1678,7 @@ function renderRuedaForm(){
         <div class="rueda-area-name">${a.name}</div>
         <div class="rueda-area-score" id="rs-${a.id}">${score}</div>
       </div>
-      <input type="range" class="rueda-slider" min="1" max="10" value="${score}" data-area="${a.id}">
+      <input type="range" class="rueda-slider" aria-label="Puntuación del área" min="1" max="10" value="${score}" data-area="${a.id}">
       <textarea class="rueda-note" rows="2" placeholder="¿Cómo te sientes en esta área?" data-area="${a.id}">${esc(note)}</textarea>
     `;
     div.querySelector('.rueda-slider').addEventListener('input',function(){
@@ -1874,7 +1876,7 @@ function renderTasks(){
   const pend=list.tasks.filter(t=>!t.done).length;
   document.getElementById('taskCount').textContent=pend+' pendiente'+(pend===1?'':'s');
   const addRow=document.createElement('div');addRow.className='add-task';
-  addRow.innerHTML=`<div class="plus" style="color:var(--tasks)">+</div><input placeholder="Añadir tarea…" id="newTaskInp">`;
+  addRow.innerHTML=`<div class="plus" style="color:var(--tasks)">+</div><input placeholder="Añadir tarea…" id="newTaskInp" aria-label="Añadir tarea">`;
   cont.appendChild(addRow);
   const inp=addRow.querySelector('input');
   inp.onkeydown=e=>{if(e.key==='Enter'&&inp.value.trim()){list.tasks.unshift({text:inp.value.trim(),done:false});saveLists(lists);renderTasks();setTimeout(()=>{const ni=document.getElementById('newTaskInp');if(ni)ni.focus();},50);}};
@@ -1885,7 +1887,7 @@ function renderTasks(){
 }
 function taskEl(t,i,lists,list){
   const el=document.createElement('div');el.className='task'+(t.done?' done':'');
-  el.innerHTML=`<div class="t-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
+  el.innerHTML=`<div class="t-check"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></div>
     <div class="t-text">${esc(t.text)}</div><button class="del">✕</button>`;
   el.querySelector('.t-check').onclick=()=>{t.done=!t.done;saveLists(lists);renderTasks();};
   el.querySelector('.t-text').onclick=()=>{t.done=!t.done;saveLists(lists);renderTasks();};
