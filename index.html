@@ -455,8 +455,8 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
     <div id="diatab-manana">
       <div class="card">
         <div class="dia-field">
-          <label>→ Mi pequeño objetivo del día es</label>
-          <textarea id="d-objetivo" rows="2" placeholder="Una cosa concreta que quiero conseguir hoy…"></textarea>
+          <label>El día de hoy quiero que sea así</label>
+          <textarea id="d-intencion" rows="2" placeholder="Cómo visualizo este día…"></textarea>
         </div>
         <div class="dia-field">
           <label>Mi pregunta de hoy</label>
@@ -465,12 +465,6 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
         <div class="dia-field" style="margin-bottom:0">
           <label>Respuesta a mi pregunta</label>
           <textarea id="d-respuesta" rows="2" placeholder="Cuando tenga claridad, anoto aquí mi respuesta…"></textarea>
-        </div>
-      </div>
-      <div class="card">
-        <div class="dia-field" style="margin-bottom:0">
-          <label>El día de hoy quiero que sea así</label>
-          <textarea id="d-intencion" rows="2" placeholder="Cómo visualizo este día…"></textarea>
         </div>
       </div>
 
@@ -809,6 +803,7 @@ function refreshUI(){
 
 /* Recargar variables de estado en memoria desde localStorage (tras syncDown) */
 function reloadStateVars(){
+  DB.clearCache();
   activeProyId=DB.get('activeProyId',null);
   activeList=DB.get('activeList',0);
   activeDayKey=todayKey();
@@ -822,9 +817,28 @@ function reloadStateVars(){
 
 /* ===== STORAGE ===== */
 const POMO_DEFAULTS={focus:25,short:5,long:15,cycles:4,sound:true};
+/* ===== STORE (Fase 3: caché en memoria + Fase 2: sync centralizado) =====
+   - get() cachea el parse de localStorage; solo vuelve a parsear si la caché
+     está vacía. Evita JSON.parse repetidos en cada render.
+   - set() escribe en caché + localStorage y, si la clave está en SYNC_KEYS,
+     dispara syncLater() automáticamente. Único punto de sincronización.
+   - clearCache() invalida la caché tras un syncDown (datos remotos nuevos). */
+const _dbCache={};
 const DB={
-  get:(k,d)=>{try{return JSON.parse(localStorage.getItem('ritmo_'+k))??d}catch(e){return d}},
-  set:(k,v)=>localStorage.setItem('ritmo_'+k,JSON.stringify(v))
+  get:(k,d)=>{
+    if(k in _dbCache)return _dbCache[k];
+    let v;
+    try{v=JSON.parse(localStorage.getItem('ritmo_'+k));}catch(e){v=undefined;}
+    if(v===null||v===undefined)v=(d!==undefined?d:undefined);
+    _dbCache[k]=v;
+    return v;
+  },
+  set:(k,v)=>{
+    _dbCache[k]=v;
+    localStorage.setItem('ritmo_'+k,JSON.stringify(v));
+    if(_SYNC_SET&&_SYNC_SET.has(k)&&typeof syncLater==='function')syncLater();
+  },
+  clearCache:()=>{for(const k in _dbCache)delete _dbCache[k];}
 };
 const SYNC_KEYS=[
   'habits',
@@ -840,6 +854,7 @@ const SYNC_KEYS=[
   'pomoStats',
   'pomoLogs'
 ];
+const _SYNC_SET=new Set(SYNC_KEYS);
 const SYNC_DEFAULTS={
   habits:[],
   lists:[{name:'Mi lista',tasks:[]}],
@@ -1389,12 +1404,11 @@ function autoSaveDraft(){
   const isPast=activeDayKey<tk;
   // guardar mañana si es editable
   if(!isPast){
-    const obj=document.getElementById('d-objetivo');
+    const obj=document.getElementById('d-intencion');
     if(obj){
-      entry.manana.objetivo=obj.value;
+      entry.manana.intencion=obj.value;
       entry.manana.pregunta=document.getElementById('d-pregunta').value;
       entry.manana.respuesta=document.getElementById('d-respuesta').value;
-      entry.manana.intencion=document.getElementById('d-intencion').value;
     }
   }
   // guardar cierre si es editable
@@ -1410,7 +1424,7 @@ function autoSaveDraft(){
   // solo guardar si hay contenido real (evitar entradas fantasma)
   const m=entry.manana,c=entry.cierre;
   const hasTasks=m.tasks&&(m.tasks.pro.length||m.tasks.per.length||m.tasks.soc.length);
-  const hasContent=(m.objetivo||'').trim()||(m.pregunta||'').trim()||(m.respuesta||'').trim()||(m.intencion||'').trim()||
+  const hasContent=(m.pregunta||'').trim()||(m.respuesta||'').trim()||(m.intencion||'').trim()||
     (c.funciono||'').trim()||(c.fallo||'').trim()||(c.norepito||'').trim()||hasTasks;
   if(hasContent)saveDayEntry(entry);
 }
@@ -1460,11 +1474,10 @@ function renderDiaContent(){
   const entry=getDayEntry(activeDayKey);
   if(activeDiaTab==='manana'){
     const m=entry.manana;
-    document.getElementById('d-objetivo').value=m.objetivo||'';
     document.getElementById('d-pregunta').value=m.pregunta||'';
     document.getElementById('d-respuesta').value=m.respuesta||'';
     document.getElementById('d-intencion').value=m.intencion||'';
-    ['d-objetivo','d-pregunta','d-respuesta','d-intencion'].forEach(id=>{document.getElementById(id).readOnly=!editableManana;});
+    ['d-intencion','d-pregunta','d-respuesta'].forEach(id=>{document.getElementById(id).readOnly=!editableManana;});
     renderAspectTasks(entry,editableManana);
     document.getElementById('saveDayBtn').style.display=editableManana?'inline-flex':'none';
     // etiqueta del botón según día
@@ -1532,7 +1545,6 @@ document.querySelectorAll('.add-at input').forEach(inp=>{
 /* save mañana */
 document.getElementById('saveDayBtn').onclick=()=>{
   const entry=getDayEntry(activeDayKey);
-  entry.manana.objetivo=document.getElementById('d-objetivo').value;
   entry.manana.pregunta=document.getElementById('d-pregunta').value;
   entry.manana.respuesta=document.getElementById('d-respuesta').value;
   entry.manana.intencion=document.getElementById('d-intencion').value;
@@ -1837,7 +1849,13 @@ document.getElementById('bitaSave').onclick=()=>{
   document.querySelectorAll('#moodRow button').forEach(x=>x.classList.remove('sel'));
   renderBitaList();showToast();
 };
-document.getElementById('bitaSearch').oninput=renderBitaList;
+/* Buscador con debounce: re-renderiza ~180ms tras la última tecla,
+   no en cada pulsación. Evita reconstruir toda la lista al escribir. */
+let _bitaSearchTimer=null;
+document.getElementById('bitaSearch').oninput=()=>{
+  if(_bitaSearchTimer)clearTimeout(_bitaSearchTimer);
+  _bitaSearchTimer=setTimeout(renderBitaList,180);
+};
 function renderBitaList(){
   const q=document.getElementById('bitaSearch').value.toLowerCase();
   let entries=DB.get('bita',[]);
@@ -1952,24 +1970,8 @@ document.getElementById('authPass').onkeydown=e=>{if(e.key==='Enter')authAction(
 document.getElementById('logoutBtn').onclick=async()=>{await syncUp();await supa.auth.signOut();};
 
 /* Interceptar todos los saves para sincronizar */
-const _origSaveHabits=saveHabits;
-saveHabits=h=>{_origSaveHabits(h);syncLater();};
-const _origSaveLists=saveLists;
-saveLists=l=>{_origSaveLists(l);syncLater();};
-const _origSaveRuedas=saveRuedas;
-saveRuedas=r=>{_origSaveRuedas(r);syncLater();};
-const _origSaveDiaDays=saveDiaDays;
-saveDiaDays=a=>{_origSaveDiaDays(a);syncLater();};
-const _origSaveNorte=saveNorte;
-saveNorte=n=>{_origSaveNorte(n);syncLater();};
-const _origSavePomoLogs=savePomoLogs;
-savePomoLogs=l=>{_origSavePomoLogs(l);syncLater();};
-const _origSaveBita=saveBita;
-saveBita=b=>{_origSaveBita(b);syncLater();};
-const _origSavePomoStats=savePomoStats;
-savePomoStats=s=>{_origSavePomoStats(s);syncLater();};
-const _origSavePomoCfg=savePomoCfg;
-savePomoCfg=c=>{_origSavePomoCfg(c);syncLater();};
+/* Sync centralizado: DB.set() dispara syncLater() para las SYNC_KEYS.
+   (Eliminado el antiguo monkey-patching de save*; ya no hace falta.) */
 
 /* Arrancar */
 // Sincronizar al salir o cambiar de pestaña/app
