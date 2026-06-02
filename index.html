@@ -127,9 +127,13 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
 .entry .e-date{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--bitacora);margin-bottom:6px;}
 .entry .e-text{font-size:16px;line-height:1.55;white-space:pre-wrap;}
 .entry .e-mood{font-size:18px;margin-bottom:4px;}
-.bita-input{width:100%;border:1.5px solid var(--line-soft);border-radius:12px;background:var(--card);font-size:17px;line-height:1.55;resize:none;color:var(--ink);outline:none;min-height:112px;padding:12px 14px;margin:10px 0 12px;}
+.bita-input{width:100%;border:1.5px solid var(--line-soft);border-radius:12px;background:var(--card);font-size:17px;line-height:1.55;resize:none;color:var(--ink);outline:none;min-height:148px;padding:12px 14px;margin:10px 0 12px;}
 .bita-input:focus{border-color:var(--bitacora);}
 .bita-input::placeholder{color:var(--ink-soft);}
+/* Auto-resize: el campo crece con el contenido; JS ajusta la altura.
+   overflow:hidden evita la barra de scroll mientras crece. */
+.dia-grow{overflow:hidden;resize:none;}
+.dia-field textarea.dia-grow{min-height:46px;}
 .mood-row{display:flex;gap:8px;margin:10px 0;}
 .mood-row button{font-size:24px;width:44px;height:44px;border-radius:12px;background:var(--bg-soft);display:flex;align-items:center;justify-content:center;opacity:.5;transition:all .15s;}
 .mood-row button.sel{opacity:1;background:var(--bitacora-soft);transform:scale(1.08);}
@@ -456,15 +460,15 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="card">
         <div class="dia-field">
           <label>El día de hoy quiero que sea así</label>
-          <textarea id="d-intencion" rows="2" placeholder="Cómo visualizo este día…"></textarea>
+          <textarea id="d-intencion" rows="2" class="dia-grow" maxlength="2000" placeholder="Cómo visualizo este día…"></textarea>
         </div>
         <div class="dia-field">
           <label>Mi pregunta de hoy</label>
-          <input id="d-pregunta" aria-label="Pregunta del día" placeholder="La pregunta que me hago hoy…">
+          <textarea id="d-pregunta" rows="1" class="dia-grow" maxlength="2000" aria-label="Pregunta del día" placeholder="La pregunta que me hago hoy…"></textarea>
         </div>
         <div class="dia-field" style="margin-bottom:0">
           <label>Respuesta a mi pregunta</label>
-          <textarea id="d-respuesta" rows="2" placeholder="Cuando tenga claridad, anoto aquí mi respuesta…"></textarea>
+          <textarea id="d-respuesta" rows="2" class="dia-grow" maxlength="2000" placeholder="Cuando tenga claridad, anoto aquí mi respuesta…"></textarea>
         </div>
       </div>
 
@@ -553,7 +557,7 @@ nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;backgro
       <div class="mood-row" id="moodRow">
         <button data-m="😞">😞</button><button data-m="😕">😕</button><button data-m="😐">😐</button><button data-m="🙂">🙂</button><button data-m="😄">😄</button>
       </div>
-      <textarea class="bita-input" id="bitaInput" placeholder="¿Cómo ha ido el día? Cómo te sientes, qué notaste hoy, qué te impidió hacer algo. Escribe libre, anota lo que quieras. Son tus apuntes."></textarea>
+      <textarea class="bita-input dia-grow" id="bitaInput" maxlength="5000" placeholder="¿Cómo ha ido el día? Cómo te sientes, qué notaste hoy, qué te impidió hacer algo. Escribe libre, anota lo que quieras. Son tus apuntes."></textarea>
       <button class="btn-main" id="bitaSave" style="background:var(--bitacora);box-shadow:0 6px 18px rgba(106,108,196,.28);width:100%;margin-top:6px;">Guardar entrada</button>
     </div>
     <input class="search-box" id="bitaSearch" aria-label="Buscar en tus entradas" placeholder="🔍 Buscar en tus entradas…">
@@ -1478,6 +1482,7 @@ function renderDiaContent(){
     document.getElementById('d-respuesta').value=m.respuesta||'';
     document.getElementById('d-intencion').value=m.intencion||'';
     ['d-intencion','d-pregunta','d-respuesta'].forEach(id=>{document.getElementById(id).readOnly=!editableManana;});
+    ['d-intencion','d-pregunta','d-respuesta'].forEach(id=>autoGrow(document.getElementById(id)));
     renderAspectTasks(entry,editableManana);
     document.getElementById('saveDayBtn').style.display=editableManana?'inline-flex':'none';
     // etiqueta del botón según día
@@ -1846,6 +1851,7 @@ document.getElementById('bitaSave').onclick=()=>{
   entries.unshift({id:Date.now(),date:new Date().toISOString(),mood:bitaMood,text});
   saveBita(entries);
   document.getElementById('bitaInput').value='';bitaMood='';
+  autoGrow(document.getElementById('bitaInput'));
   document.querySelectorAll('#moodRow button').forEach(x=>x.classList.remove('sel'));
   renderBitaList();showToast();
 };
@@ -1916,6 +1922,21 @@ function renameList(i){const lists=getLists();openModal('Renombrar lista','Nombr
 
 /* ===== UTILS ===== */
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* Auto-resize de textareas: ajusta la altura al contenido para que
+   nunca se corte el texto. Se llama al escribir y al cargar valores. */
+function autoGrow(el){
+  if(!el)return;
+  el.style.height='auto';
+  const min=parseFloat(getComputedStyle(el).minHeight)||0;
+  el.style.height=Math.max(el.scrollHeight,min)+'px';
+}
+function autoGrowAll(){
+  document.querySelectorAll('.dia-grow').forEach(autoGrow);
+}
+/* Engancha el crecimiento a cada tecla en todos los .dia-grow */
+document.querySelectorAll('.dia-grow').forEach(el=>{
+  el.addEventListener('input',()=>autoGrow(el));
+});
 
 /* ===== INIT ===== */
 function initApp(){
