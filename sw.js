@@ -1,4 +1,4 @@
-const C='meridian-v2';
+const C='meridian-v3';
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html'])));
