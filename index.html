@@ -1154,9 +1154,10 @@ function tick(){
   const now=Date.now();
   const left=Math.round((pomoState.endTime-now)/1000);
   if(left<=0){
+    const lateMs=now-pomoState.endTime;
     pomoState.remaining=0;
     updatePomoUI();
-    phaseEnd();
+    phaseEnd(lateMs);
   }else{
     pomoState.remaining=left;
     updatePomoUI();
@@ -1171,6 +1172,7 @@ function startTimer(){
   /* Intervalo rápido (250ms) para UI fluida; el cálculo real
      depende de Date.now(), no de la frecuencia del intervalo */
   pomoState.timer=setInterval(tick,250);
+  schedulePush();
 }
 function stopTimer(){
   if(pomoState.timer){clearInterval(pomoState.timer);pomoState.timer=null;}
@@ -1182,8 +1184,10 @@ function stopTimer(){
   pomoState.endTime=null;
 }
 
-function phaseEnd(){
-  stopTimer();beep();notify();
+function phaseEnd(lateMs=0){
+  stopTimer();beep();
+  if(lateMs<8000)notify();   /* si terminó hace rato, ya avisó el push del servidor */
+  cancelPush();
   if(pomoState.phase==='focus'){
     registrarPomodoro();
     if(pomoState.cycle>=pomoCfg.cycles){pomoState.phase='long';pomoState.cycle=1;}
@@ -1194,11 +1198,11 @@ function phaseEnd(){
 }
 
 document.getElementById('pomoStart').onclick=()=>{
-  if(pomoState.running){stopTimer();}
-  else{startTimer();unlockAudio();buzz();}
+  if(pomoState.running){stopTimer();cancelPush();}
+  else{startTimer();unlockAudio();buzz();primePush();}
   updatePomoUI();
 };
-function resetPomo(){stopTimer();pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null,endTime:null};updatePomoUI();}
+function resetPomo(){stopTimer();cancelPush();pomoState={running:false,phase:'focus',cycle:1,remaining:pomoCfg.focus*60,total:pomoCfg.focus*60,timer:null,endTime:null};updatePomoUI();}
 document.getElementById('pomoReset').onclick=resetPomo;
 
 document.getElementById('pomoSavePartial').onclick=()=>{
@@ -1226,8 +1230,79 @@ function beep(){
     if(navigator.vibrate)navigator.vibrate([200,100,200]);
   }catch(e){}
 }
-function notify(){if('Notification'in window&&Notification.permission==='granted'){const ph=pomoState.phase==='focus'?'¡A trabajar!':'Toca descansar';new Notification('Meridian',{body:ph,silent:false});}}
-if('Notification'in window&&Notification.permission==='default')document.getElementById('pomoStart').addEventListener('click',()=>Notification.requestPermission(),{once:true});
+/* Mensajes según la fase que termina (aún no ha cambiado de fase) */
+function pomoMsg(){
+  const focus=pomoState.phase==='focus';
+  return focus
+    ? {title:'Pomodoro completado 🎯',body:'Tómate un respiro. Te aviso para volver.'}
+    : {title:'Descanso terminado',body:'De vuelta al foco. ¡Vamos!'};
+}
+
+/* Notificación local inmediata (cuando la app está en primer plano) */
+async function notify(){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const m=pomoMsg();
+  try{
+    const reg=('serviceWorker'in navigator)?await navigator.serviceWorker.ready:null;
+    if(reg&&reg.showNotification){
+      reg.showNotification(m.title,{body:m.body,icon:'./icon.png',tag:'pomodoro',renotify:true});
+    }else{
+      new Notification(m.title,{body:m.body});
+    }
+  }catch(e){}
+}
+
+/* ===== WEB PUSH (avisos con la app cerrada / pantalla bloqueada) ===== */
+const VAPID_PUBLIC='BOfmx2ytwCNMIznxtCebpNI-tLQ-KL7DOAKanEne7fH79JoTEXdOGkO2Qa4ZSwy9sog0qa8bMBKt9lmrl_9wcxQ';
+function urlB64ToUint8(b64){
+  const pad='='.repeat((4-b64.length%4)%4);
+  const base=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base);const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+let _pushSub=null;
+async function ensurePushSub(){
+  if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window))return null;
+  if(Notification.permission!=='granted')return null;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUBLIC)});
+    _pushSub=sub;return sub;
+  }catch(e){console.warn('push sub error',e);return null;}
+}
+/* Pide permiso en el gesto del usuario (Safari exige gesto directo) */
+function primePush(){
+  if(!('Notification'in window))return;
+  if(Notification.permission==='granted'){schedulePush();return;}
+  if(Notification.permission==='default'){
+    Notification.requestPermission().then(p=>{if(p==='granted'&&pomoState.running)schedulePush();});
+  }
+}
+/* Programa el aviso en el servidor para el momento exacto en que termina la fase */
+async function schedulePush(){
+  if(!currentUser||!pomoState.running||!pomoState.endTime)return;
+  const sub=await ensurePushSub();
+  if(!sub)return;
+  const m=pomoMsg();
+  try{
+    await supa.from('push_reminders').delete().eq('user_id',currentUser.id).eq('status','pending');
+    await supa.from('push_reminders').insert({
+      user_id:currentUser.id,
+      subscription:sub.toJSON(),
+      fire_at:new Date(pomoState.endTime).toISOString(),
+      phase:pomoState.phase,
+      title:m.title,body:m.body
+    });
+  }catch(e){console.warn('schedulePush error',e);}
+}
+/* Cancela el aviso pendiente (pausa, reset, o fase terminada en primer plano) */
+async function cancelPush(){
+  if(!currentUser)return;
+  try{await supa.from('push_reminders').delete().eq('user_id',currentUser.id).eq('status','pending');}
+  catch(e){}
+}
 
 /* ===== PROYECTOS POMODORO ===== */
 const PROY_COLORS=['#d8612f','#3f8f7a','#6a6cc4','#c2982b','#b04a7a','#4a90d9','#e8864a','#7bc47b','#8a5a44','#2f6f88'];
